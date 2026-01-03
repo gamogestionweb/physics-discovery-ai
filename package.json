@@ -1,0 +1,22 @@
+{
+  "name": "physics-discovery-ai",
+  "version": "1.0.0",
+  "description": "An AI agent that discovers the laws of physics through experimentation",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "ai",
+    "physics",
+    "simulation",
+    "deepseek",
+    "scientific-discovery",
+    "llm"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}

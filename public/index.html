@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Physics Discovery - AI Descubre Física</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; overflow: hidden; }
+        body { background: #0a0a12; color: #fff; font-family: 'Segoe UI', sans-serif; }
+
+        .main { display: flex; height: 100vh; }
+
+        .world {
+            width: 60%;
+            height: 100%;
+            position: relative;
+            background: linear-gradient(180deg, #0a1525 0%, #152535 40%, #1a3525 70%, #0f2515 100%);
+        }
+        #canvas { width: 100%; height: 100%; }
+
+        #panel {
+            width: 40%;
+            height: 100vh;
+            background: linear-gradient(180deg, #0d1520 0%, #081015 100%);
+            border-left: 2px solid #1a4a3a;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 15px 20px;
+            background: linear-gradient(180deg, #0a2020 0%, #051515 100%);
+            border-bottom: 1px solid #1a4a3a;
+        }
+        .panel-header h2 {
+            color: #00ffaa;
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+        .panel-header .subtitle { color: #556; font-size: 12px; }
+
+        .tabs {
+            display: flex;
+            background: #0a1015;
+            border-bottom: 1px solid #1a3a3a;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            color: #556;
+            font-size: 12px;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .tab.active { color: #00ffaa; border-bottom-color: #00ffaa; }
+        .tab:hover { color: #00cc88; }
+
+        .tab-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            display: none;
+        }
+        .tab-content.active { display: block; }
+
+        /* Pensamiento actual - GRANDE */
+        .thought-box {
+            background: linear-gradient(135deg, #0a1a2a 0%, #051525 100%);
+            border: 1px solid #1a4a5a;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+        .thought-box h3 {
+            color: #00aaff;
+            font-size: 14px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .thought-text {
+            color: #c0d0e0;
+            font-size: 14px;
+            line-height: 1.6;
+            min-height: 60px;
+            font-style: italic;
+        }
+        .action-badge {
+            display: inline-block;
+            background: #00ffaa;
+            color: #000;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        /* Leyes descubiertas */
+        .law-card {
+            background: linear-gradient(135deg, #0a2a1a 0%, #051a10 100%);
+            border: 1px solid #1a5a3a;
+            border-left: 4px solid #00ff88;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 12px;
+            animation: lawPop 0.5s ease-out;
+        }
+        @keyframes lawPop {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .law-card .name {
+            color: #00ff88;
+            font-size: 15px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .law-card .formula {
+            color: #a0d0a0;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .law-card .evidence {
+            color: #708080;
+            font-size: 11px;
+            margin-top: 8px;
+        }
+
+        /* Hipótesis */
+        .hypothesis-card {
+            background: #1a1a10;
+            border-left: 3px solid #ffaa00;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 0 8px 8px 0;
+        }
+        .hypothesis-card .text { color: #d0c090; font-size: 13px; }
+        .hypothesis-card .test { color: #808060; font-size: 11px; margin-top: 5px; }
+
+        /* Estado del agente */
+        .agent-card {
+            background: linear-gradient(135deg, #1a2a3a 0%, #0a1a2a 100%);
+            border: 1px solid #2a4a5a;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .agent-card h3 { color: #00aaff; font-size: 14px; margin-bottom: 12px; }
+        .agent-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        .stat-item {
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .stat-item .value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #00ffaa;
+        }
+        .stat-item .label {
+            font-size: 10px;
+            color: #556;
+            text-transform: uppercase;
+        }
+        .energy-bar {
+            margin-top: 10px;
+            background: #1a1a1a;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .energy-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #00ffaa);
+            transition: width 0.3s;
+        }
+
+        /* Log de actividad */
+        .log-entry {
+            padding: 8px 10px;
+            border-bottom: 1px solid #1a2a2a;
+            font-size: 12px;
+        }
+        .log-entry .time { color: #556; }
+        .log-entry .action { color: #00aaff; }
+        .log-entry .result { color: #888; }
+        .log-entry.discovery { background: rgba(0,255,136,0.1); }
+        .log-entry.discovery .action { color: #00ff88; font-weight: bold; }
+
+        /* Controles */
+        #controls {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            display: flex;
+            gap: 8px;
+            z-index: 100;
+        }
+        #controls button {
+            background: rgba(10,20,30,0.9);
+            color: #00ffaa;
+            border: 1px solid #1a4a3a;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        #controls button:hover { background: rgba(20,40,50,0.9); }
+        #controls button:disabled { opacity: 0.5; cursor: not-allowed; }
+        #controls button.active { background: #00aa66; color: #000; }
+
+        #hud {
+            position: fixed;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(5,15,20,0.95);
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #00ffaa;
+            border: 1px solid #1a4a3a;
+            display: flex;
+            gap: 25px;
+        }
+        .hud-item { display: flex; align-items: center; gap: 8px; }
+        .hud-item .icon { font-size: 16px; }
+        .hud-item .value { font-weight: bold; font-size: 18px; }
+        .hud-item .label { color: #556; font-size: 10px; }
+
+        /* Empty states */
+        .empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: #445;
+        }
+        .empty .icon { font-size: 40px; margin-bottom: 15px; }
+
+        /* Objetos del mundo */
+        .objects-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+        .object-card {
+            background: rgba(20,30,40,0.5);
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 11px;
+        }
+        .object-card .name { color: #00aaff; font-weight: bold; }
+        .object-card .details { color: #667; margin-top: 4px; }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0a1015; }
+        ::-webkit-scrollbar-thumb { background: #1a3a3a; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <button id="btnStart">▶ INICIAR</button>
+        <button id="btnPause" disabled>⏸ PAUSA</button>
+        <button id="btnReset" disabled>↺ RESET</button>
+    </div>
+
+    <div id="hud">
+        <div class="hud-item">
+            <span class="icon">⏱</span>
+            <div>
+                <div class="value" id="hudTime">0.0s</div>
+                <div class="label">TIEMPO</div>
+            </div>
+        </div>
+        <div class="hud-item">
+            <span class="icon">🏆</span>
+            <div>
+                <div class="value" id="hudLaws">0</div>
+                <div class="label">LEYES</div>
+            </div>
+        </div>
+        <div class="hud-item">
+            <span class="icon">⚡</span>
+            <div>
+                <div class="value" id="hudActions">0</div>
+                <div class="label">ACCIONES</div>
+            </div>
+        </div>
+        <div class="hud-item">
+            <span class="icon">💡</span>
+            <div>
+                <div class="value" id="hudHypotheses">0</div>
+                <div class="label">HIPÓTESIS</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="world">
+            <canvas id="canvas"></canvas>
+        </div>
+
+        <div id="panel">
+            <div class="panel-header">
+                <h2>🔬 Physics Discovery Lab</h2>
+                <div class="subtitle">AI descubriendo las leyes de la física</div>
+            </div>
+
+            <div class="tabs">
+                <div class="tab active" data-tab="mind">🧠 Mente</div>
+                <div class="tab" data-tab="laws">🏆 Leyes</div>
+                <div class="tab" data-tab="log">📜 Log</div>
+                <div class="tab" data-tab="world">🌍 Mundo</div>
+            </div>
+
+            <div id="mind-tab" class="tab-content active">
+                <!-- Pensamiento actual -->
+                <div class="thought-box">
+                    <h3>💭 Pensamiento Actual</h3>
+                    <div class="thought-text" id="currentThought">
+                        Inicia la simulación para ver el razonamiento del AI...
+                    </div>
+                    <div id="currentAction"></div>
+                </div>
+
+                <!-- Estado del agente -->
+                <div class="agent-card">
+                    <h3>🤖 Estado del Agente</h3>
+                    <div class="agent-stats">
+                        <div class="stat-item">
+                            <div class="value" id="agentX">--</div>
+                            <div class="label">Posición X</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="value" id="agentY">--</div>
+                            <div class="label">Posición Y</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="value" id="agentVx">--</div>
+                            <div class="label">Velocidad X</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="value" id="agentVy">--</div>
+                            <div class="label">Velocidad Y</div>
+                        </div>
+                    </div>
+                    <div style="margin-top:12px;">
+                        <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                            <span style="color:#556;font-size:11px;">ENERGÍA</span>
+                            <span style="color:#00ffaa;font-size:11px;" id="agentEnergy">100%</span>
+                        </div>
+                        <div class="energy-bar">
+                            <div class="energy-bar-fill" id="energyBar" style="width:100%"></div>
+                        </div>
+                    </div>
+                    <div style="margin-top:10px;font-size:11px;color:#667;">
+                        Sosteniendo: <span id="agentHolding" style="color:#00aaff;">nada</span>
+                    </div>
+                </div>
+
+                <!-- Hipótesis activas -->
+                <h3 style="color:#ffaa00;font-size:13px;margin:15px 0 10px;">📊 Hipótesis Activas</h3>
+                <div id="hypothesesList">
+                    <div class="empty" style="padding:20px;">Sin hipótesis aún</div>
+                </div>
+            </div>
+
+            <div id="laws-tab" class="tab-content">
+                <div id="lawsList">
+                    <div class="empty">
+                        <div class="icon">🔍</div>
+                        <div>El AI aún no ha descubierto ninguna ley</div>
+                        <div style="font-size:12px;margin-top:10px;color:#445;">
+                            Leyes posibles: Gravedad, Newton F=ma, Fricción, Péndulo, Arquímedes...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="log-tab" class="tab-content">
+                <div id="activityLog">
+                    <div class="empty">Sin actividad</div>
+                </div>
+            </div>
+
+            <div id="world-tab" class="tab-content">
+                <h3 style="color:#00aaff;font-size:13px;margin-bottom:12px;">🎯 Objetos en el Mundo</h3>
+                <div class="objects-grid" id="objectsList"></div>
+            </div>
+        </div>
+    </div>
+
+<script>
+// ==================== ESTADO ====================
+let canvas, ctx;
+let isRunning = false;
+let worldState = null;
+let pollInterval = null;
+let cameraX = 0;
+
+// ==================== INICIALIZACIÓN ====================
+function init() {
+    canvas = document.getElementById('canvas');
+    ctx = canvas.getContext('2d');
+
+    resize();
+    window.onresize = resize;
+
+    // Tabs
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.onclick = () => {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById(tab.dataset.tab + '-tab').classList.add('active');
+        };
+    });
+
+    // Botones
+    document.getElementById('btnStart').onclick = startSimulation;
+    document.getElementById('btnPause').onclick = pauseSimulation;
+    document.getElementById('btnReset').onclick = resetSimulation;
+
+    requestAnimationFrame(render);
+}
+
+function resize() {
+    const container = canvas.parentElement;
+    canvas.width = container.clientWidth;
+    canvas.height = container.clientHeight;
+}
+
+// ==================== RENDERIZADO ====================
+function render() {
+    const w = canvas.width;
+    const h = canvas.height;
+
+    // Cielo
+    const sky = ctx.createLinearGradient(0, 0, 0, h);
+    sky.addColorStop(0, '#0a1525');
+    sky.addColorStop(0.5, '#152535');
+    sky.addColorStop(0.8, '#1a3525');
+    sky.addColorStop(1, '#0f2515');
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, w, h);
+
+    // Estrellas
+    ctx.fillStyle = '#fff';
+    for(let i = 0; i < 80; i++) {
+        const x = (i * 137 + 50) % w;
+        const y = (i * 89 + 30) % (h * 0.5);
+        ctx.globalAlpha = 0.2 + (i % 5) * 0.1;
+        ctx.beginPath();
+        ctx.arc(x, y, (i % 3) + 0.5, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    // Suelo
+    const groundY = h - 100;
+    const ground = ctx.createLinearGradient(0, groundY, 0, h);
+    ground.addColorStop(0, '#2a5a3a');
+    ground.addColorStop(0.3, '#1a4a2a');
+    ground.addColorStop(1, '#0a2a1a');
+    ctx.fillStyle = ground;
+    ctx.fillRect(0, groundY, w, h - groundY);
+
+    // Línea del suelo
+    ctx.strokeStyle = '#3a6a4a';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, groundY);
+    ctx.lineTo(w, groundY);
+    ctx.stroke();
+
+    // Grid de referencia
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    ctx.lineWidth = 1;
+    for(let x = 0; x < w; x += 100) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, h);
+        ctx.stroke();
+
+        // Números de posición
+        ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        ctx.font = '10px sans-serif';
+        ctx.fillText(Math.floor((x + cameraX) / 10) + 'm', x + 5, groundY - 5);
+    }
+
+    if(!worldState || !worldState.world) {
+        // Mensaje de espera
+        ctx.fillStyle = '#00ffaa';
+        ctx.font = 'bold 24px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Pulsa INICIAR para comenzar', w/2, h/2);
+        ctx.font = '14px sans-serif';
+        ctx.fillStyle = '#556';
+        ctx.fillText('El AI explorará el mundo y descubrirá las leyes de la física', w/2, h/2 + 30);
+        requestAnimationFrame(render);
+        return;
+    }
+
+    const scale = 8; // pixels por metro
+
+    // Actualizar cámara para seguir al agente
+    if(worldState.world.agent) {
+        const targetX = parseFloat(worldState.world.agent.position.x) * scale - w/2;
+        cameraX += (targetX - cameraX) * 0.05;
+    }
+
+    // Dibujar objetos del mundo
+    if(worldState.world.nearbyObjects) {
+        for(const obj of worldState.world.nearbyObjects) {
+            const ox = parseFloat(obj.position?.x || 0) * scale - cameraX;
+            const oy = groundY - parseFloat(obj.position?.y || 0) * scale;
+
+            if(ox < -100 || ox > w + 100) continue;
+
+            ctx.save();
+
+            switch(obj.type) {
+                case 'sphere':
+                    const r = Math.max(10, (obj.mass || 1) * 3);
+
+                    // Sombra
+                    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                    ctx.beginPath();
+                    ctx.ellipse(ox, groundY + 5, r, r * 0.3, 0, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Esfera con gradiente
+                    const sphereGrad = ctx.createRadialGradient(ox - r/3, oy - r - r/3, 0, ox, oy - r, r);
+                    sphereGrad.addColorStop(0, lightenColor(getMaterialColor(obj.material), 60));
+                    sphereGrad.addColorStop(1, getMaterialColor(obj.material));
+                    ctx.beginPath();
+                    ctx.arc(ox, oy - r, r, 0, Math.PI * 2);
+                    ctx.fillStyle = sphereGrad;
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    break;
+
+                case 'cube':
+                    const size = Math.max(15, (obj.mass || 1) * 4);
+                    ctx.fillStyle = getMaterialColor(obj.material);
+                    ctx.fillRect(ox - size/2, oy - size, size, size);
+                    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+                    ctx.strokeRect(ox - size/2, oy - size, size, size);
+                    break;
+
+                case 'pendulum':
+                    const pivotX = 70 * scale - cameraX;
+                    const pivotY = groundY - 10 * scale;
+                    const bobX = parseFloat(obj.bobPosition?.x || 70) * scale - cameraX;
+                    const bobY = groundY - parseFloat(obj.bobPosition?.y || 5) * scale;
+
+                    // Soporte
+                    ctx.fillStyle = '#666';
+                    ctx.fillRect(pivotX - 40, pivotY - 15, 80, 20);
+
+                    // Cuerda
+                    ctx.strokeStyle = '#888';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(pivotX, pivotY);
+                    ctx.lineTo(bobX, bobY);
+                    ctx.stroke();
+
+                    // Bob
+                    const bobGrad = ctx.createRadialGradient(bobX - 5, bobY - 5, 0, bobX, bobY, 18);
+                    bobGrad.addColorStop(0, '#e0e0e0');
+                    bobGrad.addColorStop(1, '#707070');
+                    ctx.beginPath();
+                    ctx.arc(bobX, bobY, 18, 0, Math.PI * 2);
+                    ctx.fillStyle = bobGrad;
+                    ctx.fill();
+                    ctx.strokeStyle = '#888';
+                    ctx.stroke();
+                    break;
+
+                case 'fluid':
+                    // Tanque de agua
+                    ctx.fillStyle = 'rgba(30, 100, 180, 0.6)';
+                    ctx.fillRect(ox, oy - 50, 80, 50);
+
+                    // Ondas
+                    ctx.strokeStyle = 'rgba(100, 180, 255, 0.5)';
+                    ctx.lineWidth = 2;
+                    for(let i = 0; i < 3; i++) {
+                        ctx.beginPath();
+                        for(let wx = 0; wx < 80; wx += 5) {
+                            const wy = oy - 50 + i * 15 + Math.sin(wx * 0.2 + Date.now() * 0.005) * 3;
+                            if(wx === 0) ctx.moveTo(ox + wx, wy);
+                            else ctx.lineTo(ox + wx, wy);
+                        }
+                        ctx.stroke();
+                    }
+
+                    // Borde
+                    ctx.strokeStyle = '#4a8ab0';
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(ox, oy - 50, 80, 50);
+                    break;
+
+                case 'ramp':
+                    ctx.fillStyle = '#555';
+                    ctx.beginPath();
+                    ctx.moveTo(ox, oy);
+                    ctx.lineTo(ox + 70, oy);
+                    ctx.lineTo(ox + 70, oy - 40);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.strokeStyle = '#777';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    break;
+
+                case 'platform':
+                    ctx.fillStyle = '#444';
+                    ctx.fillRect(ox - 40, oy - 5, 80, 10);
+                    break;
+            }
+
+            // Etiqueta del objeto
+            ctx.fillStyle = 'rgba(255,255,255,0.7)';
+            ctx.font = '10px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(obj.id, ox, oy + 20);
+
+            // Velocidad si se mueve
+            if(obj.velocity) {
+                const vx = parseFloat(obj.velocity.x);
+                const vy = parseFloat(obj.velocity.y);
+                if(Math.abs(vx) > 0.1 || Math.abs(vy) > 0.1) {
+                    ctx.strokeStyle = '#ffaa00';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(ox, oy - 10);
+                    ctx.lineTo(ox + vx * 5, oy - 10 - vy * 5);
+                    ctx.stroke();
+                }
+            }
+
+            ctx.restore();
+        }
+    }
+
+    // Dibujar agente
+    if(worldState.world.agent) {
+        const ax = parseFloat(worldState.world.agent.position.x) * scale - cameraX;
+        const ay = groundY - parseFloat(worldState.world.agent.position.y) * scale;
+
+        // Sombra
+        ctx.fillStyle = 'rgba(0,0,0,0.4)';
+        ctx.beginPath();
+        ctx.ellipse(ax, groundY + 5, 30, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Cuerpo principal
+        const bodyGrad = ctx.createRadialGradient(ax - 10, ay - 50, 0, ax, ay - 35, 35);
+        bodyGrad.addColorStop(0, '#00ffdd');
+        bodyGrad.addColorStop(1, '#008899');
+        ctx.beginPath();
+        ctx.arc(ax, ay - 35, 30, 0, Math.PI * 2);
+        ctx.fillStyle = bodyGrad;
+        ctx.fill();
+
+        // Glow
+        ctx.beginPath();
+        ctx.arc(ax, ay - 35, 38, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(0,255,200,0.4)';
+        ctx.lineWidth = 6;
+        ctx.stroke();
+
+        // Ojos
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(ax - 10, ay - 40, 6, 0, Math.PI * 2);
+        ctx.arc(ax + 10, ay - 40, 6, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Brillos
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(ax - 8, ay - 42, 2.5, 0, Math.PI * 2);
+        ctx.arc(ax + 12, ay - 42, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Boca (sonrisa si descubrió algo)
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(ax, ay - 28, 10, 0.2, Math.PI - 0.2);
+        ctx.stroke();
+
+        // Barra de energía encima
+        const energy = parseFloat(worldState.world.agent.energy) / 100;
+        ctx.fillStyle = '#222';
+        ctx.fillRect(ax - 25, ay - 85, 50, 8);
+        ctx.fillStyle = energy > 0.3 ? '#00ff88' : '#ff4444';
+        ctx.fillRect(ax - 25, ay - 85, 50 * energy, 8);
+        ctx.strokeStyle = '#444';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(ax - 25, ay - 85, 50, 8);
+
+        // Etiqueta
+        ctx.fillStyle = '#00ffaa';
+        ctx.font = 'bold 16px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('AI', ax, ay - 95);
+
+        // Indicador de lo que sostiene
+        if(worldState.world.agent.holding) {
+            ctx.fillStyle = '#ffaa00';
+            ctx.font = '12px sans-serif';
+            ctx.fillText('📦 ' + worldState.world.agent.holding, ax, ay - 75);
+        }
+
+        // Flecha de velocidad
+        const vx = parseFloat(worldState.world.agent.velocity.x);
+        const vy = parseFloat(worldState.world.agent.velocity.y);
+        if(Math.abs(vx) > 0.5 || Math.abs(vy) > 0.5) {
+            ctx.strokeStyle = '#00ff88';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(ax, ay - 35);
+            ctx.lineTo(ax + vx * 10, ay - 35 - vy * 10);
+            ctx.stroke();
+
+            // Punta de flecha
+            ctx.fillStyle = '#00ff88';
+            ctx.beginPath();
+            ctx.arc(ax + vx * 10, ay - 35 - vy * 10, 4, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    requestAnimationFrame(render);
+}
+
+function getMaterialColor(material) {
+    const colors = {
+        'rubber': '#ff5555',
+        'iron': '#888888',
+        'wood': '#b8860b',
+        'ice': '#aaddff',
+        'cork': '#deb887',
+        'steel': '#c0c0c0'
+    };
+    return colors[material] || '#999999';
+}
+
+function lightenColor(color, percent) {
+    const num = parseInt(color.replace('#', ''), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = Math.min(255, (num >> 16) + amt);
+    const G = Math.min(255, (num >> 8 & 0x00FF) + amt);
+    const B = Math.min(255, (num & 0x0000FF) + amt);
+    return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
+}
+
+// ==================== ACTUALIZACIÓN UI ====================
+function updateUI() {
+    if(!worldState) return;
+
+    // HUD
+    document.getElementById('hudTime').textContent = (worldState.world?.time?.toFixed(1) || '0.0') + 's';
+    document.getElementById('hudLaws').textContent = worldState.ai?.lawsDiscovered || '0';
+    document.getElementById('hudActions').textContent = worldState.ai?.totalActions || '0';
+    document.getElementById('hudHypotheses').textContent = worldState.ai?.hypotheses || '0';
+
+    // Pensamiento actual
+    if(worldState.thoughtLog && worldState.thoughtLog.length > 0) {
+        const last = worldState.thoughtLog[worldState.thoughtLog.length - 1];
+        document.getElementById('currentThought').textContent = last.thinking || 'Procesando...';
+        document.getElementById('currentAction').innerHTML = last.action
+            ? `<span class="action-badge">${last.action.type}</span>`
+            : '';
+    }
+
+    // Estado del agente
+    if(worldState.world?.agent) {
+        const a = worldState.world.agent;
+        document.getElementById('agentX').textContent = parseFloat(a.position.x).toFixed(1) + 'm';
+        document.getElementById('agentY').textContent = parseFloat(a.position.y).toFixed(1) + 'm';
+        document.getElementById('agentVx').textContent = parseFloat(a.velocity.x).toFixed(1) + ' m/s';
+        document.getElementById('agentVy').textContent = parseFloat(a.velocity.y).toFixed(1) + ' m/s';
+
+        const energy = parseFloat(a.energy);
+        document.getElementById('agentEnergy').textContent = energy.toFixed(0) + '%';
+        document.getElementById('energyBar').style.width = energy + '%';
+        document.getElementById('energyBar').style.background = energy > 30
+            ? 'linear-gradient(90deg, #00ff88, #00ffaa)'
+            : '#ff4444';
+
+        document.getElementById('agentHolding').textContent = a.holding || 'nada';
+    }
+
+    // Leyes descubiertas
+    if(worldState.ai?.discoveries && worldState.ai.discoveries.length > 0) {
+        document.getElementById('lawsList').innerHTML = worldState.ai.discoveries.map(law => `
+            <div class="law-card">
+                <div class="name">✓ ${law.name}</div>
+                <div class="formula">${law.formula}</div>
+                ${law.evidence ? `<div class="evidence">Evidencia: ${law.evidence}</div>` : ''}
+            </div>
+        `).join('');
+    }
+
+    // Hipótesis
+    if(worldState.ai?.activeHypotheses && worldState.ai.activeHypotheses.length > 0) {
+        document.getElementById('hypothesesList').innerHTML = worldState.ai.activeHypotheses.map(h => `
+            <div class="hypothesis-card">
+                <div class="text">❓ ${h.description}</div>
+                ${h.test ? `<div class="test">Test: ${h.test}</div>` : ''}
+            </div>
+        `).join('');
+    } else {
+        document.getElementById('hypothesesList').innerHTML = '<div style="color:#445;padding:10px;">Sin hipótesis activas</div>';
+    }
+
+    // Log de actividad
+    if(worldState.thoughtLog && worldState.thoughtLog.length > 0) {
+        document.getElementById('activityLog').innerHTML = worldState.thoughtLog.slice().reverse().map(entry => `
+            <div class="log-entry ${entry.discovery ? 'discovery' : ''}">
+                <span class="time">[${entry.time?.toFixed(1)}s]</span>
+                <span class="action">${entry.action?.type || 'WAIT'}</span>
+                ${entry.discovery ? `<span style="color:#00ff88;"> 🎉 ${entry.discovery.name}</span>` : ''}
+                <div class="result">${entry.thinking?.substring(0, 80)}...</div>
+            </div>
+        `).join('');
+    }
+
+    // Objetos del mundo
+    if(worldState.world?.nearbyObjects) {
+        document.getElementById('objectsList').innerHTML = worldState.world.nearbyObjects.map(obj => `
+            <div class="object-card">
+                <div class="name">${obj.id}</div>
+                <div class="details">
+                    ${obj.type} ${obj.material ? '| ' + obj.material : ''} ${obj.mass ? '| ' + obj.mass + 'kg' : ''}
+                </div>
+            </div>
+        `).join('');
+    }
+}
+
+// ==================== POLLING ====================
+async function pollState() {
+    try {
+        const res = await fetch('/api/state');
+        worldState = await res.json();
+        updateUI();
+    } catch(e) {
+        console.error('Poll error:', e);
+    }
+}
+
+// ==================== CONTROLES ====================
+async function startSimulation() {
+    try {
+        const res = await fetch('/api/start', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+        });
+
+        const result = await res.json();
+        if(result.status === 'started') {
+            isRunning = true;
+            document.getElementById('btnStart').disabled = true;
+            document.getElementById('btnStart').textContent = '▶ CORRIENDO';
+            document.getElementById('btnPause').disabled = false;
+            document.getElementById('btnReset').disabled = false;
+            pollInterval = setInterval(pollState, 400);
+            pollState();
+        }
+    } catch(e) {
+        alert('Error: ' + e.message);
+    }
+}
+
+async function pauseSimulation() {
+    if(isRunning) {
+        await fetch('/api/pause', { method: 'POST' });
+        isRunning = false;
+        document.getElementById('btnStart').disabled = false;
+        document.getElementById('btnStart').textContent = '▶ CONTINUAR';
+        document.getElementById('btnPause').disabled = true;
+    }
+}
+
+async function resetSimulation() {
+    await fetch('/api/reset', { method: 'POST' });
+    isRunning = false;
+    if(pollInterval) clearInterval(pollInterval);
+    worldState = null;
+    cameraX = 0;
+
+    document.getElementById('btnStart').disabled = false;
+    document.getElementById('btnStart').textContent = '▶ INICIAR';
+    document.getElementById('btnPause').disabled = true;
+    document.getElementById('btnReset').disabled = true;
+
+    document.getElementById('currentThought').textContent = 'Inicia la simulación para ver el razonamiento del AI...';
+    document.getElementById('currentAction').innerHTML = '';
+    document.getElementById('lawsList').innerHTML = '<div class="empty"><div class="icon">🔍</div><div>El AI aún no ha descubierto ninguna ley</div></div>';
+    document.getElementById('hypothesesList').innerHTML = '<div style="color:#445;padding:10px;">Sin hipótesis activas</div>';
+    document.getElementById('activityLog').innerHTML = '<div class="empty">Sin actividad</div>';
+}
+
+window.onload = init;
+</script>
+</body>
+</html>
