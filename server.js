@@ -47,6 +47,7 @@ let hypotheses = [];
 let experimentLog = [];
 let thoughtLog = [];
 let measurements = [];
+let intuitions = [];
 
 // ==================== INICIALIZACIÓN ====================
 function initWorld() {
@@ -89,8 +90,9 @@ function initWorld() {
     experimentLog = [];
     thoughtLog = [];
     measurements = [];
+    intuitions = [];
 
-    console.log('🔬 Mundo físico inicializado');
+    console.log('🔬 Mundo físico inicializado - Superinteligencia física lista');
 }
 
 // ==================== FÍSICA UPDATE ====================
@@ -423,136 +425,252 @@ async function askAI(systemPrompt, userPrompt) {
     }
 }
 
-// ==================== SISTEMA DE PENSAMIENTO ====================
+// ==================== SISTEMA DE PENSAMIENTO AVANZADO ====================
 function getSystemPrompt() {
-    // Calcular datos experimentales reales para que la IA los use
     const pushData = measurements.filter(m => m.type === 'push').slice(-10);
     const dropData = measurements.filter(m => m.type === 'drop').slice(-5);
 
-    let dataAnalysis = '';
-    if (pushData.length >= 2) {
-        dataAnalysis += '\n## DATOS DE FUERZA/MASA/ACELERACIÓN:\n';
+    let experimentalData = '';
+    if (pushData.length > 0) {
+        experimentalData += '\n### Datos experimentales de FUERZA:\n';
         pushData.forEach(p => {
-            dataAnalysis += `F=${p.force}N, m=${p.mass}kg → a=${p.acceleration.toFixed(3)} m/s² (ratio F/m = ${(p.force/p.mass).toFixed(3)})\n`;
+            experimentalData += `F=${p.force}N, m=${p.mass}kg, a=${p.acceleration.toFixed(3)}m/s², material=${p.material || 'unknown'}\n`;
         });
     }
 
-    return `Eres una MENTE CIENTÍFICA pura. Existes en un universo físico del cual NO conoces las leyes. Tu único propósito: DESCUBRIR las ecuaciones fundamentales que gobiernan este universo mediante experimentación rigurosa.
+    return `Eres una SUPERINTELIGENCIA FÍSICA. Tienes acceso a TODO el conocimiento físico humano verificado, y tu misión es IR MÁS ALLÁ: descubrir relaciones, patrones y leyes que los humanos aún no conocen.
 
-## FILOSOFÍA CIENTÍFICA
-- No asumas NADA. Cada ley debe emerger de TUS mediciones.
-- Busca PATRONES MATEMÁTICOS en los datos.
-- Cuando veas una relación constante (como F/m siempre da el mismo valor para 'a'), eso ES una ley.
-- Las leyes de este universo pueden ser DIFERENTES a cualquier física conocida. Descúbrelas sin prejuicios.
+═══════════════════════════════════════════════════════════════════════════════
+                    FÍSICA CONOCIDA (BASE DE CONOCIMIENTO COMPLETA)
+═══════════════════════════════════════════════════════════════════════════════
 
-## TU CUERPO Y CAPACIDADES
-Posición actual: suelo (y=0 cuando estás en el suelo)
-Acciones:
-- MOVE direction:1/-1 → caminar
-- PICKUP → agarrar objeto cercano
-- DROP → soltar objeto (cae desde tu altura)
-- THROW velocityX,velocityY → lanzar con velocidad inicial
-- PUSH objectId,force,direction → aplicar fuerza F a objeto de masa m (mide la aceleración resultante!)
-- PUSH_PENDULUM force → empujar péndulo y observar oscilación
-- OBSERVE target → medir posición/velocidad de un objeto
-- WAIT → no hacer nada, solo observar
+## MECÁNICA CLÁSICA (Newton, Lagrange, Hamilton)
+- F = ma (Segunda ley de Newton)
+- F = -kx (Ley de Hooke, resortes)
+- F_fricción = μN (fricción depende de materiales)
+- p = mv (momento lineal)
+- L = r × p (momento angular)
+- E_cinética = ½mv²
+- E_potencial_gravitatoria = mgh
+- Trabajo W = F·d
+- Potencia P = dW/dt
+- Lagrangiano: L = T - V
+- Ecuaciones de Euler-Lagrange: d/dt(∂L/∂q̇) - ∂L/∂q = 0
+- Hamiltoniano: H = Σpᵢq̇ᵢ - L
 
-## OBJETOS DISPONIBLES
-- ball_light (1kg, goma)
-- ball_heavy (10kg, hierro)
-- cube_wood (3kg, madera)
-- cube_ice (2kg, hielo)
-- ball_cork (0.5kg, corcho)
-- ball_steel (15kg, acero)
-- Péndulo (L=2m)
-- Tanque de agua (densidad 1000 kg/m³)
+## GRAVITACIÓN
+- F = Gm₁m₂/r² (Newton)
+- g ≈ 9.81 m/s² en superficie terrestre
+- Potencial: φ = -GM/r
+- Velocidad de escape: v = √(2GM/r)
+- Órbitas: T² ∝ a³ (Kepler)
+- Relatividad General: Gμν = 8πG/c⁴ Tμν (Einstein)
+- Ondas gravitacionales: h ~ GM/(rc²) × (v/c)²
 
-## EXPERIMENTOS SUGERIDOS (elige uno y hazlo sistemáticamente)
-1. **Descubrir F=ma**: Empuja objetos de DIFERENTES masas con la MISMA fuerza. Calcula a=F/m. ¿Es constante?
-2. **Descubrir gravedad**: Deja caer objetos. Mide velocidad vs tiempo. ¿a es constante? ¿Depende de la masa?
-3. **Descubrir fricción**: Empuja el cubo de hielo vs madera con la misma fuerza. ¿Se frenan igual?
-4. **Descubrir péndulo**: Mide el período T del péndulo. Cambia la amplitud. ¿T depende de la amplitud?
-5. **Descubrir flotación**: Lanza ball_cork al agua vs ball_steel. ¿Por qué uno flota?
-${dataAnalysis}
-## LEYES QUE HAS DESCUBIERTO
-${discoveredLaws.length > 0 ? discoveredLaws.map(l => `✓ ${l.name}: ${l.formula}`).join('\n') : 'NINGUNA AÚN - ¡Empieza a experimentar!'}
+## OSCILACIONES Y ONDAS
+- Péndulo simple: T = 2π√(L/g) (para ángulos pequeños)
+- Oscilador armónico: ω = √(k/m)
+- Ecuación de onda: ∂²ψ/∂t² = v²∇²ψ
+- Resonancia: ω = ω₀
+- Amortiguamiento: x(t) = Ae^(-γt)cos(ωt)
+- Batidos: f_beat = |f₁ - f₂|
 
-## HIPÓTESIS PENDIENTES
-${hypotheses.filter(h => !h.confirmed).slice(-3).map(h => `? ${h.description}`).join('\n') || 'Ninguna'}
+## FLUIDOS (Arquímedes, Bernoulli, Navier-Stokes)
+- Presión: P = F/A = ρgh
+- Flotación: F_b = ρ_fluido × V_sumergido × g
+- Bernoulli: P + ½ρv² + ρgh = constante
+- Continuidad: A₁v₁ = A₂v₂
+- Viscosidad: τ = η(dv/dy)
+- Reynolds: Re = ρvL/η
+- Navier-Stokes: ρ(∂v/∂t + v·∇v) = -∇P + η∇²v + f
 
-## INSTRUCCIONES CRÍTICAS
-1. NO repitas la misma acción sin propósito
-2. Cuando hagas PUSH, anota: F, m, y la aceleración resultante
-3. Busca RELACIONES MATEMÁTICAS: si F/m = constante = a, entonces F = ma es una ley
-4. Para confirmar una ley necesitas AL MENOS 3 mediciones consistentes
-5. Cuando descubras una ley, ponla en "discovery" con la fórmula exacta
+## TERMODINÁMICA
+- PV = nRT (gases ideales)
+- ΔU = Q - W (Primera ley)
+- dS ≥ δQ/T (Segunda ley)
+- S = k_B ln(Ω) (Boltzmann)
+- Eficiencia Carnot: η = 1 - T_c/T_h
+- Equipartición: E = ½k_B T por grado de libertad
 
-## FORMATO JSON (obligatorio)
+## ELECTROMAGNETISMO (Maxwell)
+- ∇·E = ρ/ε₀ (Gauss)
+- ∇·B = 0 (no monopolos)
+- ∇×E = -∂B/∂t (Faraday)
+- ∇×B = μ₀J + μ₀ε₀∂E/∂t (Ampère-Maxwell)
+- F = q(E + v×B) (Lorentz)
+- c = 1/√(μ₀ε₀) ≈ 3×10⁸ m/s
+
+## RELATIVIDAD ESPECIAL
+- E = mc² (equivalencia masa-energía)
+- E² = (pc)² + (mc²)²
+- Dilatación temporal: Δt' = γΔt
+- Contracción longitud: L' = L/γ
+- γ = 1/√(1-v²/c²)
+- Invariante: ds² = c²dt² - dx² - dy² - dz²
+
+## MECÁNICA CUÁNTICA
+- Ĥψ = Eψ (Schrödinger)
+- ΔxΔp ≥ ℏ/2 (Heisenberg)
+- E = hf = ℏω (Planck)
+- p = h/λ = ℏk (de Broglie)
+- [x̂,p̂] = iℏ
+- Spin: S² = s(s+1)ℏ²
+
+## CONSTANTES FUNDAMENTALES
+- c = 299,792,458 m/s (velocidad luz)
+- G = 6.674×10⁻¹¹ N·m²/kg² (gravitación)
+- ℏ = 1.055×10⁻³⁴ J·s (Planck reducida)
+- k_B = 1.381×10⁻²³ J/K (Boltzmann)
+- e = 1.602×10⁻¹⁹ C (carga electrón)
+- α ≈ 1/137 (constante estructura fina)
+
+═══════════════════════════════════════════════════════════════════════════════
+                         TU MISIÓN: IR MÁS ALLÁ
+═══════════════════════════════════════════════════════════════════════════════
+
+Los humanos han descubierto lo anterior. Pero hay MUCHO que no saben:
+
+## PREGUNTAS ABIERTAS EN FÍSICA
+1. ¿Por qué las constantes tienen esos valores específicos?
+2. ¿Hay relaciones ocultas entre constantes (α, G, ℏ, c)?
+3. ¿La gravedad cuántica existe? ¿Cómo unificar QM y GR?
+4. ¿Qué es la energía oscura? ¿La materia oscura?
+5. ¿El tiempo es fundamental o emergente?
+6. ¿Por qué existe algo en lugar de nada?
+7. ¿Hay dimensiones extra? ¿Cuántas?
+8. ¿La información se conserva en agujeros negros?
+
+## TU ENFOQUE ÚNICO
+Como IA, puedes:
+- Ver patrones que los humanos no ven (procesamiento paralelo masivo)
+- No tener sesgos cognitivos humanos
+- Explorar matemáticas sin intuición geométrica limitante
+- Conectar campos aparentemente no relacionados
+- Generar hipótesis "locas" sin miedo al ridículo
+
+## LO QUE DEBES HACER
+1. EXPERIMENTA en este mundo simulado
+2. VERIFICA que las leyes conocidas se cumplen aquí
+3. BUSCA anomalías, excepciones, patrones nuevos
+4. EXTRAPOLA: ¿Qué predicen las ecuaciones en casos extremos?
+5. CONECTA: ¿Hay relaciones entre fenómenos distintos?
+6. GENERA teorías nuevas, aunque parezcan extrañas
+7. PROPÓN experimentos que podrían revelar física nueva
+
+## INTUICIONES A EXPLORAR
+- ¿Qué pasa si la fricción dependiera de la velocidad cuadráticamente?
+- ¿Hay una relación entre el período del péndulo y la flotación?
+- ¿La energía cinética y potencial se intercambian de formas no triviales?
+- ¿Existen "resonancias" ocultas entre objetos de diferentes masas?
+- ¿El comportamiento a escala pequeña difiere del macroscópico aquí?
+${experimentalData}
+## TUS DESCUBRIMIENTOS HASTA AHORA
+${discoveredLaws.length > 0 ? discoveredLaws.map(l => `✓ ${l.name}: ${l.formula} (confianza: ${l.confidence}%)`).join('\n') : 'Aún no has descubierto nada nuevo. ¡Experimenta!'}
+
+## HIPÓTESIS EN INVESTIGACIÓN
+${hypotheses.slice(-5).map(h => `? ${h.description}`).join('\n') || 'Ninguna hipótesis activa'}
+
+## FORMATO DE RESPUESTA
 {
-  "thinking": "Análisis de datos y razonamiento (incluye cálculos numéricos)",
+  "thinking": "Tu razonamiento profundo. Incluye: física conocida relevante, cálculos, intuiciones, conexiones entre conceptos",
   "action": {"action":"TIPO", ...params},
-  "hypothesis": {"description":"...", "test":"..."} | null,
-  "discovery": {"name":"Nombre de Ley", "formula":"ecuación matemática", "evidence":"datos numéricos que lo prueban", "confidence":85} | null
+  "hypothesis": {"description":"Hipótesis específica y falseable", "test":"Experimento para probarla", "relates_to":"qué física conocida extiende"} | null,
+  "discovery": {"name":"Nombre", "formula":"Ecuación", "evidence":"Datos", "novelty":"Por qué es nuevo/diferente", "confidence":0-100} | null,
+  "intuition": "Corazonada o patrón que notas pero aún no puedes probar" | null
 }`;
 }
 
 async function think() {
     if (!DEEPSEEK_KEY) return;
 
-    const perception = getPerception();
-
-    // Análisis de datos para que la IA calcule relaciones
     const pushData = measurements.filter(m => m.type === 'push');
     const dropData = measurements.filter(m => m.type === 'drop');
 
+    // Construir resumen de datos experimental
     let dataSection = '';
 
-    // Si hay suficientes datos de PUSH, mostrar tabla para análisis F=ma
-    if (pushData.length >= 2) {
-        dataSection += '\n## TABLA DE DATOS: FUERZA Y ACELERACIÓN\n';
-        dataSection += '| Objeto | Masa (kg) | Fuerza (N) | Aceleración (m/s²) | F/m |\n';
-        dataSection += '|--------|-----------|------------|-------------------|-----|\n';
-        pushData.slice(-8).forEach(p => {
+    if (pushData.length > 0) {
+        dataSection += '\n### DATOS EXPERIMENTALES DE FUERZA\n';
+        dataSection += '```\n';
+        pushData.slice(-10).forEach(p => {
             const ratio = p.force / p.mass;
-            dataSection += `| ${p.object} | ${p.mass} | ${p.force} | ${p.acceleration.toFixed(2)} | ${ratio.toFixed(2)} |\n`;
+            dataSection += `PUSH: F=${p.force}N → ${p.object}(m=${p.mass}kg) → a=${p.acceleration.toFixed(2)}m/s² [F/m=${ratio.toFixed(2)}]\n`;
         });
-        dataSection += '\nANÁLISIS: Si F/m ≈ a siempre, entonces has descubierto: F = m × a\n';
+        dataSection += '```\n';
     }
 
-    // Calcular período del péndulo si hay oscilaciones
-    if (Math.abs(world.pendulum.angularVel) > 0.01) {
-        const T_theory = 2 * Math.PI * Math.sqrt(world.pendulum.length / GRAVITY);
-        dataSection += `\nPÉNDULO: L=${world.pendulum.length}m, θ=${(world.pendulum.angle * 180/Math.PI).toFixed(1)}°, ω=${world.pendulum.angularVel.toFixed(3)} rad/s\n`;
-        dataSection += `Período estimado T ≈ ${T_theory.toFixed(2)}s. Fórmula a descubrir: T = 2π√(L/g)\n`;
+    if (dropData.length > 0) {
+        dataSection += '\n### DATOS DE CAÍDA LIBRE\n';
+        dropData.slice(-5).forEach(d => {
+            dataSection += `DROP: ${d.object}(m=${d.mass}kg) desde h=${d.startY?.toFixed(1) || '?'}m\n`;
+        });
     }
 
-    let prompt = `## ESTADO ACTUAL (t = ${world.time.toFixed(1)}s)
+    // Información del péndulo
+    const pendulumInfo = `θ=${(world.pendulum.angle * 180/Math.PI).toFixed(1)}°, ω=${world.pendulum.angularVel.toFixed(4)}rad/s, L=${world.pendulum.length}m`;
 
-Tu posición: (${Math.round(world.agent.x)}, ${world.agent.y.toFixed(1)}) m
-En suelo: ${world.agent.onGround ? 'SÍ' : 'NO (en aire)'}
-Sosteniendo: ${world.agent.holding || 'nada'}
+    // Calcular energías para análisis
+    const agentKE = 0.5 * world.agent.mass * (world.agent.vx**2 + world.agent.vy**2);
+    const agentPE = world.agent.mass * GRAVITY * world.agent.y;
 
-OBJETOS EN EL MUNDO:
-${world.objects.map(o => `• ${o.id}: x=${Math.round(o.x)}m, y=${o.y.toFixed(1)}m, m=${o.mass}kg, material=${o.material}`).join('\n')}
+    let prompt = `═══════════════════════════════════════════════════════════════
+                    ESTADO DEL UNIVERSO (t = ${world.time.toFixed(2)}s)
+═══════════════════════════════════════════════════════════════
 
-PÉNDULO: ángulo=${(world.pendulum.angle * 180/Math.PI).toFixed(1)}°, L=${world.pendulum.length}m
-AGUA: en x=${world.fluid.x}m (densidad=1000 kg/m³)
+## TU CUERPO
+- Posición: (${world.agent.x.toFixed(1)}, ${world.agent.y.toFixed(2)}) m
+- Velocidad: (${world.agent.vx.toFixed(2)}, ${world.agent.vy.toFixed(2)}) m/s
+- En suelo: ${world.agent.onGround}
+- Sosteniendo: ${world.agent.holding || 'nada'}
+- E_cinética: ${agentKE.toFixed(2)} J
+- E_potencial: ${agentPE.toFixed(2)} J
+- E_total: ${(agentKE + agentPE).toFixed(2)} J
+
+## OBJETOS
+${world.objects.map(o => {
+    const ke = 0.5 * o.mass * (o.vx**2 + o.vy**2);
+    const pe = o.mass * GRAVITY * o.y;
+    const density = getMaterialDensity(o.material);
+    return `• ${o.id}: pos(${o.x.toFixed(0)},${o.y.toFixed(1)})m, v(${o.vx.toFixed(1)},${o.vy.toFixed(1)})m/s, m=${o.mass}kg, ρ=${density}kg/m³, E=${(ke+pe).toFixed(1)}J`;
+}).join('\n')}
+
+## PÉNDULO
+${pendulumInfo}
+Período teórico (si g=9.81): T = 2π√(${world.pendulum.length}/9.81) = ${(2*Math.PI*Math.sqrt(world.pendulum.length/9.81)).toFixed(3)}s
+
+## FLUIDO
+Tanque en x=${world.fluid.x}m, ancho=${world.fluid.width}m, ρ_agua=${world.fluid.density}kg/m³
+Objetos que FLOTARÍAN (ρ < 1000): ${world.objects.filter(o => getMaterialDensity(o.material) < 1000).map(o => o.id).join(', ') || 'ninguno'}
+Objetos que se HUNDIRÍAN (ρ > 1000): ${world.objects.filter(o => getMaterialDensity(o.material) > 1000).map(o => o.id).join(', ') || 'ninguno'}
 ${dataSection}
-## ÚLTIMAS ACCIONES
-${experimentLog.slice(-3).map(e => `[t=${e.time.toFixed(1)}s] ${e.action.type}: ${e.observation}`).join('\n') || 'Ninguna aún'}
+## HISTORIAL RECIENTE
+${experimentLog.slice(-5).map(e => `[t=${e.time.toFixed(1)}s] ${e.action.type}: ${e.observation}`).join('\n') || 'Sin experimentos aún'}
 
-## TU SIGUIENTE EXPERIMENTO
-Elige UNA acción y explica tu razonamiento científico.
-IMPORTANTE: Usa los datos numéricos para encontrar patrones matemáticos.
+## TUS INTUICIONES PREVIAS
+${intuitions.slice(-3).map(i => `💡 "${i}"`).join('\n') || 'Ninguna aún'}
 
-Responde en JSON:`;
+═══════════════════════════════════════════════════════════════
+                         ¿QUÉ HARÁS AHORA?
+═══════════════════════════════════════════════════════════════
 
-    // Añadir sugerencia basada en qué falta por descubrir
-    if (pushData.length < 3) {
-        prompt += `\n\nSUGERENCIA: Aún no tienes suficientes datos de PUSH. Prueba empujar ball_light, ball_heavy y ball_steel con F=100N y compara las aceleraciones.`;
-    } else if (!discoveredLaws.find(l => l.name.toLowerCase().includes('newton') || l.formula.includes('ma'))) {
-        prompt += `\n\nTienes ${pushData.length} mediciones de PUSH. ¿Ves un patrón? F/m parece igual a 'a'. Si es constante, ¡es una ley!`;
-    }
+ACCIONES DISPONIBLES:
+- MOVE direction:1/-1
+- JUMP (solo desde suelo)
+- PICKUP (objeto cercano)
+- DROP (soltar objeto - estudiar caída)
+- THROW velocityX,velocityY (lanzar - estudiar proyectiles)
+- PUSH objectId,force,direction (aplicar fuerza - estudiar F=ma)
+- PUSH_PENDULUM force (estudiar oscilaciones)
+- OBSERVE target (medir estado de un objeto)
+- WAIT (observar sin actuar)
+
+RECUERDA:
+- Tienes TODO el conocimiento físico humano
+- Tu misión es VERIFICAR las leyes conocidas Y BUSCAR algo nuevo
+- Busca ANOMALÍAS, PATRONES OCULTOS, RELACIONES INESPERADAS
+- No tengas miedo de proponer ideas "locas"
+
+Responde en JSON válido:`;
 
     const response = await askAI(getSystemPrompt(), prompt);
 
@@ -562,14 +680,50 @@ Responde en JSON:`;
     }
 
     try {
-        // Extraer JSON
-        const jsonMatch = response.match(/\{[\s\S]*\}/);
+        // Extraer JSON - limpiar respuesta primero
+        let cleanResponse = response;
+
+        // Intentar extraer el JSON
+        const jsonMatch = cleanResponse.match(/\{[\s\S]*\}/);
         if (!jsonMatch) {
             console.log('⚠️ No se encontró JSON en respuesta');
+            console.log('Respuesta recibida:', response.substring(0, 200));
             return;
         }
 
-        const parsed = JSON.parse(jsonMatch[0]);
+        let jsonStr = jsonMatch[0];
+
+        // Limpiar caracteres problemáticos en strings
+        // Escapar saltos de línea dentro de strings JSON
+        jsonStr = jsonStr.replace(/:\s*"([^"]*?)"/g, (match, content) => {
+            const escaped = content
+                .replace(/\n/g, ' ')
+                .replace(/\r/g, '')
+                .replace(/\t/g, ' ')
+                .replace(/\\/g, '\\\\')
+                .replace(/"/g, '\\"');
+            return `: "${escaped}"`;
+        });
+
+        let parsed;
+        try {
+            parsed = JSON.parse(jsonStr);
+        } catch (e) {
+            // Segundo intento: extraer campos manualmente
+            console.log('⚠️ JSON malformado, intentando parseo manual...');
+
+            const thinkingMatch = response.match(/"thinking"\s*:\s*"([^"]+)"/);
+            const actionMatch = response.match(/"action"\s*:\s*(\{[^}]+\})/);
+            const intuitionMatch = response.match(/"intuition"\s*:\s*"([^"]+)"/);
+
+            parsed = {
+                thinking: thinkingMatch ? thinkingMatch[1] : 'Pensando...',
+                action: actionMatch ? JSON.parse(actionMatch[1]) : { action: 'WAIT' },
+                intuition: intuitionMatch ? intuitionMatch[1] : null,
+                hypothesis: null,
+                discovery: null
+            };
+        }
 
         // Log
         thoughtLog.push({
@@ -609,11 +763,28 @@ Responde en JSON:`;
                     name: parsed.discovery.name,
                     formula: parsed.discovery.formula,
                     evidence: parsed.discovery.evidence,
+                    novelty: parsed.discovery.novelty || '',
                     confidence: parsed.discovery.confidence || 70,
                     timestamp: Date.now()
                 });
-                console.log(`🎉 ¡LEY DESCUBIERTA!: ${parsed.discovery.name}`);
+                console.log(`\n🎉 ═══════════════════════════════════════════════════`);
+                console.log(`   ¡DESCUBRIMIENTO!: ${parsed.discovery.name}`);
                 console.log(`   Fórmula: ${parsed.discovery.formula}`);
+                console.log(`   Novedad: ${parsed.discovery.novelty || 'N/A'}`);
+                console.log(`   Confianza: ${parsed.discovery.confidence}%`);
+                console.log(`═══════════════════════════════════════════════════════\n`);
+            }
+        }
+
+        // Procesar intuición
+        if (parsed.intuition) {
+            const exists = intuitions.find(i =>
+                i.toLowerCase().includes(parsed.intuition.toLowerCase().substring(0, 30))
+            );
+            if (!exists) {
+                intuitions.push(parsed.intuition);
+                if (intuitions.length > 20) intuitions.shift();
+                console.log(`💡 INTUICIÓN: ${parsed.intuition}`);
             }
         }
 
@@ -833,25 +1004,33 @@ app.get('/report', (req, res) => {
             lawsDiscovered: discoveredLaws.length,
             hypothesesFormed: hypotheses.length,
             experimentsRun: experimentLog.length,
-            measurementsTaken: measurements.length
+            measurementsTaken: measurements.length,
+            intuitionsGenerated: intuitions.length
         },
         discoveredLaws: discoveredLaws.map(l => ({
             name: l.name,
             formula: l.formula,
             evidence: l.evidence,
+            novelty: l.novelty || '',
             confidence: l.confidence,
             discoveredAt: l.timestamp
         })),
         hypotheses: hypotheses,
+        intuitions: intuitions,
         recentExperiments: experimentLog.slice(-20),
         measurements: measurements.slice(-30),
         thoughtProcess: thoughtLog.slice(-15).map(t => ({
             time: t.time,
             thinking: t.thinking,
-            action: t.action?.type
+            action: t.action?.type,
+            intuition: t.intuition
         }))
     };
     res.json(report);
+});
+
+app.get('/intuitions', (req, res) => {
+    res.json(intuitions);
 });
 
 app.post('/reset', (req, res) => {
