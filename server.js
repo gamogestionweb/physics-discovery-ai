@@ -4,86 +4,120 @@ const path = require('path');
 const app = express();
 app.use(express.json());
 
-// ==================== CONFIGURACIÓN ====================
+// ╔═══════════════════════════════════════════════════════════════════════════════╗
+// ║     UNIVERSO PCP - PRESENT CONTAINMENT PRINCIPLE                              ║
+// ║     El presente contiene TODA la información del pasado y futuro              ║
+// ║     La irreversibilidad es un límite energético, no ontológico               ║
+// ╚═══════════════════════════════════════════════════════════════════════════════╝
+
 let DEEPSEEK_KEY = null;
 let simulationStarted = false;
 let simulationInterval = null;
 
-// ==================== FÍSICA ====================
-const GRAVITY = 9.81;
-const FRICTION = 0.4;
-const RESTITUTION = 0.6;
+// ==================== CONSTANTES FUNDAMENTALES ====================
+const CONSTANTS = {
+    // Físicas
+    GRAVITY: 9.81,
+    FRICTION: 0.4,
+    RESTITUTION: 0.6,
 
-// ==================== MUNDO FÍSICO ====================
-let world = {
-    time: 0,
-    agent: {
-        x: 200,
-        y: 0,
-        vx: 0,
-        vy: 0,
-        mass: 70,
-        onGround: true,
-        holding: null,
-        energy: 100
-    },
-    objects: [],
-    pendulum: {
-        angle: 0.3,
-        angularVel: 0,
-        length: 2,
-        mass: 5,
-        pivotX: 400,
-        pivotY: 300
-    },
-    ramp: { x: 500, angle: 30, length: 150 },
-    fluid: { x: 700, width: 150, depth: 100, density: 1000 },
-    spring: { x: 900, k: 500, restLength: 50, attached: null }
+    // Informacionales (PCP)
+    k_B: 1.380649e-23,         // Boltzmann (J/K)
+    TEMPERATURE: 300,          // Kelvin ambiente
+    LANDAUER_MIN: 2.87e-21,    // k_B * T * ln(2) a 300K en Julios
+
+    // Límites de scrambling
+    SCRAMBLING_RATE: 0.1,      // Tasa de scrambling por segundo
+    CORRELATION_DECAY: 0.05    // Decaimiento de correlaciones visibles
 };
 
-// Leyes descubiertas
+// ==================== UNIVERSO INFORMACIONAL ====================
+let universe = {
+    time: 0,
+    tick: 0,
+
+    // Historial completo de estados (PCP: el presente contiene el pasado)
+    stateHistory: [],
+    maxHistory: 1000,
+
+    // Entropía total del sistema
+    totalEntropy: 0,
+    entropyHistory: [],
+
+    // Información "scrambled" - distribuida en correlaciones
+    scrambledInfo: [],
+
+    // Correlaciones ocultas entre objetos
+    correlations: [],
+
+    // Agente explorador
+    agent: {
+        x: 200, y: 0, vx: 0, vy: 0,
+        mass: 70, onGround: true, holding: null,
+        energy: 100,
+        informationBudget: 1000  // Energía disponible para "leer" información
+    },
+
+    // Objetos físicos con trazas informacionales
+    objects: [],
+
+    // Péndulo
+    pendulum: { angle: 0.3, angularVel: 0, length: 2, mass: 5, pivotX: 400, pivotY: 300 },
+
+    // Fluido
+    fluid: { x: 700, width: 150, depth: 100, density: 1000 },
+
+    // Campo de información - donde se "esconde" la información scrambled
+    infoField: new Array(100).fill(0).map(() => new Array(100).fill(0))
+};
+
+// ==================== REGISTRO CIENTÍFICO ====================
 let discoveredLaws = [];
 let hypotheses = [];
 let experimentLog = [];
 let thoughtLog = [];
 let measurements = [];
 let intuitions = [];
+let pcpInsights = [];  // Insights específicos sobre reversibilidad/información
 
 // ==================== INICIALIZACIÓN ====================
-function initWorld() {
-    world = {
+function initUniverse() {
+    universe = {
         time: 0,
+        tick: 0,
+        stateHistory: [],
+        maxHistory: 1000,
+        totalEntropy: 0,
+        entropyHistory: [],
+        scrambledInfo: [],
+        correlations: [],
+
         agent: {
-            x: 200,
-            y: 0,
-            vx: 0,
-            vy: 0,
-            mass: 70,
-            onGround: true,
-            holding: null,
-            energy: 100
+            x: 200, y: 0, vx: 0, vy: 0,
+            mass: 70, onGround: true, holding: null,
+            energy: 100,
+            informationBudget: 1000
         },
+
         objects: [
-            // Objetos agrupados cerca del agente para facilitar experimentos
-            { id: 'ball_light', x: 220, y: 0, vx: 0, vy: 0, mass: 1, radius: 15, material: 'rubber', color: '#ff6060' },
-            { id: 'ball_heavy', x: 250, y: 0, vx: 0, vy: 0, mass: 10, radius: 20, material: 'iron', color: '#6060ff' },
-            { id: 'ball_steel', x: 280, y: 0, vx: 0, vy: 0, mass: 15, radius: 18, material: 'steel', color: '#808080' },
-            { id: 'cube_wood', x: 310, y: 0, vx: 0, vy: 0, mass: 3, radius: 18, material: 'wood', color: '#a06030' },
-            { id: 'cube_ice', x: 340, y: 0, vx: 0, vy: 0, mass: 2, radius: 15, material: 'ice', color: '#a0e0ff' },
-            { id: 'ball_cork', x: 720, y: 0, vx: 0, vy: 0, mass: 0.5, radius: 12, material: 'cork', color: '#d0a060' } // cerca del agua
+            createInfoObject('sphere_A', 220, 0, 1, 'ruby', '#ff4060'),
+            createInfoObject('sphere_B', 250, 0, 1, 'ruby', '#ff6080'),  // Misma masa/material que A - correlacionados
+            createInfoObject('cube_M', 280, 0, 10, 'iron', '#4060ff'),
+            createInfoObject('prism_X', 310, 0, 5, 'crystal', '#40ffff'),
+            createInfoObject('ring_O', 340, 0, 3, 'gold', '#ffd040'),
+            createInfoObject('disk_Z', 720, 0, 0.5, 'cork', '#d0a060')
         ],
-        pendulum: {
-            angle: 0.3,
-            angularVel: 0,
-            length: 2,
-            mass: 5,
-            pivotX: 400,
-            pivotY: 300
-        },
-        ramp: { x: 500, angle: 30, length: 150 },
+
+        pendulum: { angle: 0.3, angularVel: 0, length: 2, mass: 5, pivotX: 400, pivotY: 300 },
         fluid: { x: 700, width: 150, depth: 100, density: 1000 },
-        spring: { x: 900, k: 500, restLength: 50, attached: null }
+        infoField: new Array(100).fill(0).map(() => new Array(100).fill(0))
     };
+
+    // Crear correlaciones ocultas iniciales
+    createInitialCorrelations();
+
+    // Guardar estado inicial
+    saveState();
 
     discoveredLaws = [];
     hypotheses = [];
@@ -91,311 +125,610 @@ function initWorld() {
     thoughtLog = [];
     measurements = [];
     intuitions = [];
+    pcpInsights = [];
 
-    console.log('🔬 Mundo físico inicializado - Superinteligencia física lista');
+    console.log('🌌 Universo PCP inicializado');
+    console.log('   - El presente contiene toda la información');
+    console.log('   - La reversibilidad tiene costo energético');
+    console.log('   - Las correlaciones ocultan información');
 }
 
-// ==================== FÍSICA UPDATE ====================
+function createInfoObject(id, x, y, mass, material, color) {
+    return {
+        id,
+        x, y, vx: 0, vy: 0,
+        mass,
+        material,
+        color,
+        radius: 15 + mass * 0.5,
+
+        // Propiedades informacionales (PCP)
+        infoTrace: [],               // Historial de estados del objeto
+        localEntropy: 0,             // Entropía local
+        correlatedWith: [],          // IDs de objetos con los que está correlacionado
+        scrambledPhase: 0,           // Fase de scrambling
+        quantumCoherence: 1.0,       // Coherencia (decae con interacciones)
+
+        // Información "oculta" en el objeto
+        hiddenInfo: {
+            birthState: { x, y, vx: 0, vy: 0, t: 0 },
+            interactions: [],
+            totalForceApplied: 0,
+            totalDistanceTraveled: 0
+        }
+    };
+}
+
+function createInitialCorrelations() {
+    // Correlaciones cuánticas entre objetos idénticos
+    universe.correlations.push({
+        type: 'entanglement',
+        objects: ['sphere_A', 'sphere_B'],
+        strength: 1.0,
+        description: 'Esferas con misma masa/material - estados correlacionados',
+        visible: false  // El AI debe descubrirla
+    });
+
+    // Correlación masa-energía
+    universe.correlations.push({
+        type: 'mass-energy',
+        objects: universe.objects.map(o => o.id),
+        strength: 0.8,
+        formula: 'E = mc²',
+        description: 'Toda masa contiene información sobre energía equivalente',
+        visible: false
+    });
+
+    // Correlación temporal (todos los objetos "recuerdan" condiciones iniciales)
+    universe.correlations.push({
+        type: 'temporal-memory',
+        objects: universe.objects.map(o => o.id),
+        strength: 1.0,
+        description: 'El estado actual contiene información completa del estado inicial',
+        recoverable: true,
+        landauerCost: calculateLandauerCost(100)  // Bits de información
+    });
+}
+
+// ==================== CÁLCULOS INFORMACIONALES (PCP) ====================
+
+function calculateLandauerCost(bits) {
+    // W ≥ k_B * T * ln(2) * bits
+    return CONSTANTS.k_B * CONSTANTS.TEMPERATURE * Math.log(2) * bits;
+}
+
+function calculateStateEntropy(state) {
+    // Entropía simplificada basada en incertidumbre de posición/momento
+    let S = 0;
+    for (const obj of state.objects) {
+        // Entropía de posición (más velocidad = más incertidumbre en posición futura)
+        const velocityMagnitude = Math.sqrt(obj.vx**2 + obj.vy**2);
+        S += Math.log(1 + velocityMagnitude);
+
+        // Entropía de scrambling
+        S += obj.scrambledPhase * 0.1;
+    }
+    return S;
+}
+
+function calculateInfoAccessibility(objectId, targetTime) {
+    // ¿Cuánta energía cuesta recuperar el estado de un objeto en un tiempo pasado?
+    const obj = universe.objects.find(o => o.id === objectId);
+    if (!obj) return Infinity;
+
+    const timeDelta = universe.time - targetTime;
+    const interactions = obj.hiddenInfo.interactions.filter(i => i.time >= targetTime).length;
+
+    // Cada interacción "scramble" la información
+    const scrambling = Math.pow(2, interactions * CONSTANTS.SCRAMBLING_RATE);
+
+    // Costo base + scrambling
+    const baseCost = calculateLandauerCost(10);  // 10 bits mínimo
+    const totalCost = baseCost * scrambling * (1 + timeDelta * 0.01);
+
+    return {
+        cost: totalCost,
+        accessible: totalCost < universe.agent.informationBudget,
+        scrambling: scrambling,
+        interactionCount: interactions
+    };
+}
+
+function scrambleInformation(obj, amount) {
+    // Cuando ocurre una interacción, la información se "esconde" en correlaciones
+    obj.scrambledPhase += amount;
+    obj.quantumCoherence *= (1 - amount * 0.1);
+
+    // Distribuir información en el campo
+    const gridX = Math.floor(obj.x / 12) % 100;
+    const gridY = Math.floor((obj.y + 50) / 2) % 100;
+    if (gridX >= 0 && gridX < 100 && gridY >= 0 && gridY < 100) {
+        universe.infoField[gridX][gridY] += amount * 0.1;
+    }
+
+    // Crear correlación con objetos cercanos
+    for (const other of universe.objects) {
+        if (other.id !== obj.id) {
+            const dist = Math.sqrt((obj.x - other.x)**2 + (obj.y - other.y)**2);
+            if (dist < 100) {
+                const existingCorr = universe.correlations.find(c =>
+                    c.type === 'interaction-induced' &&
+                    c.objects.includes(obj.id) &&
+                    c.objects.includes(other.id)
+                );
+
+                if (existingCorr) {
+                    existingCorr.strength = Math.min(1, existingCorr.strength + amount * 0.05);
+                } else {
+                    universe.correlations.push({
+                        type: 'interaction-induced',
+                        objects: [obj.id, other.id],
+                        strength: amount * 0.1,
+                        createdAt: universe.time,
+                        description: `Correlación creada por proximidad en t=${universe.time.toFixed(2)}s`
+                    });
+                }
+            }
+        }
+    }
+}
+
+function attemptTimeReversal(objectId, targetTime) {
+    // Intentar reconstruir el estado pasado de un objeto
+    const accessibility = calculateInfoAccessibility(objectId, targetTime);
+
+    if (!accessibility.accessible) {
+        return {
+            success: false,
+            reason: `Costo energético ${accessibility.cost.toExponential(2)}J excede presupuesto ${universe.agent.informationBudget}`,
+            cost: accessibility.cost
+        };
+    }
+
+    // Buscar en historial
+    const pastState = universe.stateHistory.find(s => Math.abs(s.time - targetTime) < 0.1);
+    if (!pastState) {
+        return {
+            success: false,
+            reason: 'Estado no encontrado en historial',
+            cost: 0
+        };
+    }
+
+    const pastObject = pastState.objects.find(o => o.id === objectId);
+    if (!pastObject) {
+        return {
+            success: false,
+            reason: 'Objeto no existía en ese momento',
+            cost: 0
+        };
+    }
+
+    // Cobrar energía
+    universe.agent.informationBudget -= accessibility.cost / 1e-20;  // Normalizar
+
+    return {
+        success: true,
+        pastState: {
+            x: pastObject.x,
+            y: pastObject.y,
+            vx: pastObject.vx,
+            vy: pastObject.vy
+        },
+        cost: accessibility.cost,
+        scrambling: accessibility.scrambling,
+        message: `Estado recuperado con ${accessibility.scrambling.toFixed(2)}x scrambling`
+    };
+}
+
+// ==================== GUARDAR ESTADO ====================
+function saveState() {
+    const state = {
+        time: universe.time,
+        tick: universe.tick,
+        agent: { ...universe.agent },
+        objects: universe.objects.map(o => ({
+            id: o.id,
+            x: o.x, y: o.y,
+            vx: o.vx, vy: o.vy,
+            mass: o.mass,
+            scrambledPhase: o.scrambledPhase,
+            quantumCoherence: o.quantumCoherence
+        })),
+        pendulum: { ...universe.pendulum },
+        entropy: calculateStateEntropy({ objects: universe.objects })
+    };
+
+    universe.stateHistory.push(state);
+    universe.entropyHistory.push({ time: universe.time, entropy: state.entropy });
+
+    // Limitar historial
+    if (universe.stateHistory.length > universe.maxHistory) {
+        universe.stateHistory.shift();
+    }
+    if (universe.entropyHistory.length > universe.maxHistory) {
+        universe.entropyHistory.shift();
+    }
+}
+
+// ==================== FÍSICA + INFORMACIÓN ====================
 function updatePhysics(dt) {
-    world.time += dt;
+    universe.time += dt;
+    universe.tick++;
 
-    // Actualizar agente (física más realista)
-    if (!world.agent.onGround) {
-        world.agent.vy -= GRAVITY * dt; // Gravedad hacia abajo (y negativo)
+    // Guardar estado cada 10 ticks
+    if (universe.tick % 10 === 0) {
+        saveState();
     }
-    world.agent.x += world.agent.vx * dt;
-    world.agent.y += world.agent.vy * dt;
 
-    // Suelo - el agente no puede bajar de y=0
-    if (world.agent.y <= 0) {
-        world.agent.y = 0;
-        world.agent.vy = 0;
-        world.agent.onGround = true;
+    // Actualizar agente
+    if (!universe.agent.onGround) {
+        universe.agent.vy -= CONSTANTS.GRAVITY * dt;
+    }
+    universe.agent.x += universe.agent.vx * dt;
+    universe.agent.y += universe.agent.vy * dt;
+
+    if (universe.agent.y <= 0) {
+        universe.agent.y = 0;
+        universe.agent.vy = 0;
+        universe.agent.onGround = true;
     } else {
-        world.agent.onGround = false;
+        universe.agent.onGround = false;
     }
 
-    // Techo virtual - evitar que salga volando
-    if (world.agent.y > 100) {
-        world.agent.y = 100;
-        world.agent.vy = -Math.abs(world.agent.vy) * 0.5; // Rebota hacia abajo
+    if (universe.agent.y > 100) {
+        universe.agent.y = 100;
+        universe.agent.vy = -Math.abs(universe.agent.vy) * 0.5;
     }
 
-    // Fricción en suelo
-    if (world.agent.onGround) {
-        world.agent.vx *= (1 - FRICTION * dt * 5);
-        if (Math.abs(world.agent.vx) < 0.5) world.agent.vx = 0;
+    if (universe.agent.onGround) {
+        universe.agent.vx *= (1 - CONSTANTS.FRICTION * dt * 5);
+        if (Math.abs(universe.agent.vx) < 0.5) universe.agent.vx = 0;
     }
 
-    // Límites horizontales
-    world.agent.x = Math.max(0, Math.min(1200, world.agent.x));
+    universe.agent.x = Math.max(0, Math.min(1200, universe.agent.x));
+
+    // Regenerar presupuesto de información lentamente
+    universe.agent.informationBudget = Math.min(1000, universe.agent.informationBudget + dt * 10);
 
     // Actualizar objetos
-    for (const obj of world.objects) {
+    for (const obj of universe.objects) {
         if (obj.held) continue;
 
-        // Gravedad
+        const prevX = obj.x;
+        const prevY = obj.y;
+
         if (obj.y > 0 || obj.vy !== 0) {
-            obj.vy -= GRAVITY * dt;
+            obj.vy -= CONSTANTS.GRAVITY * dt;
             obj.y += obj.vy * dt;
             obj.x += obj.vx * dt;
 
-            // Suelo
             if (obj.y <= 0) {
                 obj.y = 0;
-                obj.vy = -obj.vy * RESTITUTION;
+                const impactSpeed = Math.abs(obj.vy);
+                obj.vy = -obj.vy * CONSTANTS.RESTITUTION;
                 if (Math.abs(obj.vy) < 0.5) obj.vy = 0;
 
-                // Fricción en suelo
+                // COLISIÓN = SCRAMBLING DE INFORMACIÓN
+                if (impactSpeed > 1) {
+                    scrambleInformation(obj, impactSpeed * 0.01);
+                    obj.hiddenInfo.interactions.push({
+                        type: 'collision',
+                        time: universe.time,
+                        impactSpeed,
+                        scrambling: impactSpeed * 0.01
+                    });
+                }
+
                 const frictionCoef = getMaterialFriction(obj.material);
                 obj.vx *= (1 - frictionCoef * dt * 5);
                 if (Math.abs(obj.vx) < 0.1) obj.vx = 0;
             }
         }
 
-        // Fluido (agua)
-        if (obj.x >= world.fluid.x && obj.x <= world.fluid.x + world.fluid.width) {
+        // Fluido
+        if (obj.x >= universe.fluid.x && obj.x <= universe.fluid.x + universe.fluid.width) {
             const density = getMaterialDensity(obj.material);
-            const buoyancy = (world.fluid.density - density) * GRAVITY * 0.001;
+            const buoyancy = (universe.fluid.density - density) * CONSTANTS.GRAVITY * 0.001;
             obj.vy += buoyancy * dt;
-
-            // Resistencia del agua
             obj.vx *= (1 - 0.5 * dt);
             obj.vy *= (1 - 0.5 * dt);
+
+            // Interacción con fluido = scrambling
+            scrambleInformation(obj, dt * 0.5);
         }
+
+        // Actualizar traza informacional
+        const distance = Math.sqrt((obj.x - prevX)**2 + (obj.y - prevY)**2);
+        obj.hiddenInfo.totalDistanceTraveled += distance;
+
+        obj.infoTrace.push({ t: universe.time, x: obj.x, y: obj.y, vx: obj.vx, vy: obj.vy });
+        if (obj.infoTrace.length > 100) obj.infoTrace.shift();
+
+        // Decaimiento natural de coherencia
+        obj.quantumCoherence *= (1 - CONSTANTS.CORRELATION_DECAY * dt);
+        obj.quantumCoherence = Math.max(0.01, obj.quantumCoherence);
     }
 
     // Péndulo
-    const g = GRAVITY;
-    const L = world.pendulum.length;
-    const angularAccel = -(g / L) * Math.sin(world.pendulum.angle);
-    world.pendulum.angularVel += angularAccel * dt;
-    world.pendulum.angularVel *= 0.999; // Pequeña fricción
-    world.pendulum.angle += world.pendulum.angularVel * dt;
+    const g = CONSTANTS.GRAVITY;
+    const L = universe.pendulum.length;
+    const angularAccel = -(g / L) * Math.sin(universe.pendulum.angle);
+    universe.pendulum.angularVel += angularAccel * dt;
+    universe.pendulum.angularVel *= 0.999;
+    universe.pendulum.angle += universe.pendulum.angularVel * dt;
+
+    // Actualizar entropía total
+    universe.totalEntropy = calculateStateEntropy({ objects: universe.objects });
+
+    // Decaimiento de correlaciones inducidas
+    for (const corr of universe.correlations) {
+        if (corr.type === 'interaction-induced') {
+            corr.strength *= (1 - CONSTANTS.CORRELATION_DECAY * dt);
+        }
+    }
+    universe.correlations = universe.correlations.filter(c => c.strength > 0.01);
 }
 
 function getMaterialFriction(material) {
-    const frictions = {
-        rubber: 0.8,
-        iron: 0.5,
-        wood: 0.4,
-        ice: 0.05,
-        cork: 0.3,
-        steel: 0.5
-    };
+    const frictions = { ruby: 0.3, iron: 0.5, crystal: 0.2, gold: 0.4, cork: 0.3 };
     return frictions[material] || 0.4;
 }
 
 function getMaterialDensity(material) {
-    const densities = {
-        rubber: 1200,
-        iron: 7800,
-        wood: 600,
-        ice: 920,
-        cork: 240,
-        steel: 7850
-    };
+    const densities = { ruby: 4000, iron: 7800, crystal: 2500, gold: 19300, cork: 240 };
     return densities[material] || 1000;
 }
 
 // ==================== ACCIONES ====================
 function executeAction(action) {
     let observation = '';
-    const before = JSON.parse(JSON.stringify(world));
 
     switch(action.type) {
         case 'MOVE':
             const dir = action.direction || 1;
-            world.agent.vx = dir * 50;
-            observation = `Me muevo hacia ${dir > 0 ? 'la derecha' : 'la izquierda'}. Posición: ${world.agent.x.toFixed(1)}m`;
+            universe.agent.vx = dir * 50;
+            observation = `Movimiento ${dir > 0 ? 'derecha' : 'izquierda'}. Pos: ${universe.agent.x.toFixed(1)}m`;
             break;
 
         case 'JUMP':
-            if (world.agent.onGround) {
-                world.agent.vy = 5; // Salto moderado
-                world.agent.onGround = false;
-                observation = 'Salto con vy=5 m/s. Altura máxima teórica: h = v²/(2g)';
+            if (universe.agent.onGround) {
+                universe.agent.vy = 5;
+                universe.agent.onGround = false;
+                observation = 'Salto iniciado. vy=5 m/s';
             } else {
-                observation = 'No puedo saltar en el aire (necesito estar en el suelo)';
+                observation = 'No puedo saltar en el aire';
             }
             break;
 
         case 'PICKUP':
-            const nearObj = world.objects.find(o =>
-                !o.held && Math.abs(o.x - world.agent.x) < 50 && Math.abs(o.y - world.agent.y) < 50
+            const nearObj = universe.objects.find(o =>
+                !o.held && Math.abs(o.x - universe.agent.x) < 50 && Math.abs(o.y - universe.agent.y) < 50
             );
-            if (nearObj && !world.agent.holding) {
+            if (nearObj && !universe.agent.holding) {
                 nearObj.held = true;
-                world.agent.holding = nearObj.id;
-                observation = `Agarro ${nearObj.id}. Masa: ${nearObj.mass}kg, Material: ${nearObj.material}`;
+                universe.agent.holding = nearObj.id;
+                observation = `Agarro ${nearObj.id}. Masa: ${nearObj.mass}kg, Coherencia: ${nearObj.quantumCoherence.toFixed(3)}`;
             } else {
-                observation = world.agent.holding ? 'Ya sostengo algo' : 'No hay objetos cerca';
+                observation = universe.agent.holding ? 'Ya sostengo algo' : 'No hay objetos cerca';
             }
             break;
 
         case 'DROP':
-            if (world.agent.holding) {
-                const obj = world.objects.find(o => o.id === world.agent.holding);
+            if (universe.agent.holding) {
+                const obj = universe.objects.find(o => o.id === universe.agent.holding);
                 if (obj) {
                     obj.held = false;
-                    obj.x = world.agent.x;
-                    obj.y = world.agent.y + 30;
+                    obj.x = universe.agent.x;
+                    obj.y = universe.agent.y + 30;
                     obj.vx = 0;
                     obj.vy = 0;
-
-                    // Medir caída
-                    const startY = obj.y;
-                    const startTime = world.time;
 
                     measurements.push({
                         type: 'drop',
                         object: obj.id,
                         mass: obj.mass,
-                        startY: startY,
-                        startTime: startTime,
-                        material: obj.material
+                        startY: obj.y,
+                        startTime: universe.time,
+                        coherenceBefore: obj.quantumCoherence
                     });
 
-                    observation = `Suelto ${obj.id} desde altura ${startY.toFixed(2)}m. Observando caída...`;
+                    observation = `Suelto ${obj.id} desde h=${obj.y.toFixed(2)}m. Coherencia actual: ${obj.quantumCoherence.toFixed(3)}`;
                 }
-                world.agent.holding = null;
+                universe.agent.holding = null;
             } else {
                 observation = 'No tengo nada que soltar';
             }
             break;
 
-        case 'THROW':
-            if (world.agent.holding) {
-                const obj = world.objects.find(o => o.id === world.agent.holding);
-                if (obj) {
-                    obj.held = false;
-                    obj.x = world.agent.x;
-                    obj.y = world.agent.y + 20;
-                    obj.vx = action.velocityX || 10;
-                    obj.vy = action.velocityY || 5;
-
-                    measurements.push({
-                        type: 'throw',
-                        object: obj.id,
-                        mass: obj.mass,
-                        vx0: obj.vx,
-                        vy0: obj.vy,
-                        x0: obj.x,
-                        y0: obj.y,
-                        startTime: world.time
-                    });
-
-                    observation = `Lanzo ${obj.id} con v=(${obj.vx.toFixed(1)}, ${obj.vy.toFixed(1)}) m/s`;
-                }
-                world.agent.holding = null;
-            } else {
-                observation = 'No tengo nada que lanzar';
-            }
-            break;
-
         case 'PUSH':
-            const pushObj = world.objects.find(o => o.id === action.objectId);
-            if (pushObj && Math.abs(pushObj.x - world.agent.x) < 80) {
+            const pushObj = universe.objects.find(o => o.id === action.objectId);
+            if (pushObj && Math.abs(pushObj.x - universe.agent.x) < 80) {
                 const force = action.force || 50;
                 const accel = force / pushObj.mass;
                 pushObj.vx = accel * (action.direction || 1);
+
+                // Registrar interacción
+                pushObj.hiddenInfo.totalForceApplied += force;
+                pushObj.hiddenInfo.interactions.push({
+                    type: 'push',
+                    time: universe.time,
+                    force,
+                    direction: action.direction || 1
+                });
+
+                // Scrambling por interacción
+                scrambleInformation(pushObj, force * 0.001);
 
                 measurements.push({
                     type: 'push',
                     object: pushObj.id,
                     mass: pushObj.mass,
-                    force: force,
+                    force,
                     acceleration: accel,
-                    time: world.time
+                    time: universe.time,
+                    scramblingInduced: force * 0.001
                 });
 
-                observation = `Empujo ${pushObj.id} (${pushObj.mass}kg) con F=${force}N. a = F/m = ${accel.toFixed(2)} m/s²`;
+                observation = `Empujo ${pushObj.id} con F=${force}N. a=${accel.toFixed(2)}m/s². Scrambling inducido.`;
             } else {
                 observation = 'Objeto no encontrado o muy lejos';
             }
             break;
 
-        case 'PUSH_PENDULUM':
-            const pForce = action.force || 1;
-            world.pendulum.angularVel += pForce * 0.5;
-            observation = `Empujo el péndulo. L=${world.pendulum.length}m, θ=${(world.pendulum.angle * 180/Math.PI).toFixed(1)}°`;
-            break;
-
         case 'OBSERVE':
             const target = action.target;
-            if (target === 'pendulum') {
-                const T = 2 * Math.PI * Math.sqrt(world.pendulum.length / GRAVITY);
-                observation = `Péndulo: L=${world.pendulum.length}m, θ=${(world.pendulum.angle * 180/Math.PI).toFixed(1)}°, ω=${world.pendulum.angularVel.toFixed(3)} rad/s. Período teórico: ${T.toFixed(2)}s`;
-            } else if (target === 'fluid') {
-                observation = `Tanque de agua: densidad=${world.fluid.density} kg/m³, profundidad=${world.fluid.depth}cm`;
+            if (target === 'correlations') {
+                const visibleCorrs = universe.correlations.filter(c => c.strength > 0.3);
+                observation = `Correlaciones detectables (${visibleCorrs.length}):\n` +
+                    visibleCorrs.map(c => `  ${c.objects.join('↔')} [${c.type}] fuerza=${c.strength.toFixed(2)}`).join('\n');
+            } else if (target === 'entropy') {
+                observation = `Entropía total: ${universe.totalEntropy.toFixed(4)}\n` +
+                    `Historia: ${universe.entropyHistory.slice(-5).map(e => e.entropy.toFixed(3)).join(' → ')}`;
+            } else if (target === 'infofield') {
+                // Medir campo de información en la posición del agente
+                const gx = Math.floor(universe.agent.x / 12) % 100;
+                const gy = Math.floor((universe.agent.y + 50) / 2) % 100;
+                const localInfo = universe.infoField[Math.max(0, Math.min(99, gx))][Math.max(0, Math.min(99, gy))];
+                observation = `Información scrambled local: ${localInfo.toFixed(4)}`;
             } else {
-                const obs = world.objects.find(o => o.id === target);
+                const obs = universe.objects.find(o => o.id === target);
                 if (obs) {
-                    const density = getMaterialDensity(obs.material);
-                    observation = `${obs.id}: pos=(${obs.x.toFixed(1)}, ${obs.y.toFixed(1)})m, v=(${obs.vx.toFixed(2)}, ${obs.vy.toFixed(2)})m/s, masa=${obs.mass}kg, densidad≈${density}kg/m³`;
+                    observation = `${obs.id}:\n` +
+                        `  Pos: (${obs.x.toFixed(1)}, ${obs.y.toFixed(1)})m\n` +
+                        `  Vel: (${obs.vx.toFixed(2)}, ${obs.vy.toFixed(2)})m/s\n` +
+                        `  Masa: ${obs.mass}kg\n` +
+                        `  Coherencia cuántica: ${obs.quantumCoherence.toFixed(4)}\n` +
+                        `  Fase scrambling: ${obs.scrambledPhase.toFixed(4)}\n` +
+                        `  Interacciones: ${obs.hiddenInfo.interactions.length}\n` +
+                        `  Distancia total: ${obs.hiddenInfo.totalDistanceTraveled.toFixed(2)}m`;
                 } else {
                     observation = 'Objetivo no encontrado';
                 }
             }
             break;
 
+        case 'QUERY_PAST':
+            // Acción especial PCP: intentar leer estado pasado
+            const queryResult = attemptTimeReversal(action.objectId, action.targetTime);
+            if (queryResult.success) {
+                observation = `REVERSIÓN TEMPORAL para ${action.objectId} en t=${action.targetTime}s:\n` +
+                    `  Estado: pos(${queryResult.pastState.x.toFixed(1)}, ${queryResult.pastState.y.toFixed(1)})\n` +
+                    `  Velocidad: (${queryResult.pastState.vx.toFixed(2)}, ${queryResult.pastState.vy.toFixed(2)})\n` +
+                    `  Costo Landauer: ${queryResult.cost.toExponential(2)} J\n` +
+                    `  Factor scrambling: ${queryResult.scrambling.toFixed(2)}x`;
+            } else {
+                observation = `REVERSIÓN FALLIDA: ${queryResult.reason}`;
+            }
+            break;
+
+        case 'MEASURE_CORRELATION':
+            // Medir correlación entre dos objetos
+            const obj1 = universe.objects.find(o => o.id === action.object1);
+            const obj2 = universe.objects.find(o => o.id === action.object2);
+            if (obj1 && obj2) {
+                const corr = universe.correlations.find(c =>
+                    c.objects.includes(obj1.id) && c.objects.includes(obj2.id)
+                );
+                if (corr) {
+                    observation = `Correlación ${obj1.id} ↔ ${obj2.id}:\n` +
+                        `  Tipo: ${corr.type}\n` +
+                        `  Fuerza: ${corr.strength.toFixed(4)}\n` +
+                        `  Descripción: ${corr.description}`;
+                } else {
+                    observation = `No hay correlación medible entre ${obj1.id} y ${obj2.id}`;
+                }
+            } else {
+                observation = 'Objetos no encontrados';
+            }
+            break;
+
         case 'WAIT':
-            observation = `Observo el mundo. Tiempo: ${world.time.toFixed(2)}s`;
+            observation = `Observando. t=${universe.time.toFixed(2)}s, Entropía=${universe.totalEntropy.toFixed(4)}`;
             break;
 
         default:
-            observation = 'Acción desconocida';
+            observation = 'Acción no reconocida';
     }
 
     experimentLog.push({
-        time: world.time,
-        action: action,
-        observation: observation
+        time: universe.time,
+        action,
+        observation
     });
 
-    return { observation, before };
+    return { observation };
 }
 
-// ==================== PERCEPCIÓN ====================
+// ==================== PERCEPCIÓN EXTENDIDA (PCP) ====================
 function getPerception() {
     return {
-        time: world.time,
+        time: universe.time,
+        tick: universe.tick,
+
+        // Estado del agente
         agent: {
-            position: { x: Math.round(world.agent.x), y: Math.round(world.agent.y * 10) / 10 },
-            velocity: { x: Math.round(world.agent.vx * 10) / 10, y: Math.round(world.agent.vy * 10) / 10 },
-            onGround: world.agent.onGround,
-            holding: world.agent.holding,
-            energy: world.agent.energy
+            position: { x: Math.round(universe.agent.x), y: Math.round(universe.agent.y * 10) / 10 },
+            velocity: { x: Math.round(universe.agent.vx * 10) / 10, y: Math.round(universe.agent.vy * 10) / 10 },
+            onGround: universe.agent.onGround,
+            holding: universe.agent.holding,
+            informationBudget: Math.round(universe.agent.informationBudget)
         },
-        nearbyObjects: world.objects.map(o => ({
+
+        // Objetos con información cuántica
+        objects: universe.objects.map(o => ({
             id: o.id,
             position: { x: Math.round(o.x), y: Math.round(o.y * 10) / 10 },
             velocity: { x: Math.round(o.vx * 10) / 10, y: Math.round(o.vy * 10) / 10 },
             mass: o.mass,
             material: o.material,
-            held: o.held || false
+            coherence: Math.round(o.quantumCoherence * 1000) / 1000,
+            scrambledPhase: Math.round(o.scrambledPhase * 1000) / 1000,
+            interactionCount: o.hiddenInfo.interactions.length
         })),
-        pendulum: {
-            angle: Math.round(world.pendulum.angle * 180 / Math.PI * 10) / 10,
-            angularVel: Math.round(world.pendulum.angularVel * 1000) / 1000,
-            length: world.pendulum.length
+
+        // Información entrópica
+        entropy: {
+            total: Math.round(universe.totalEntropy * 1000) / 1000,
+            trend: getEntropyTrend()
         },
-        fluid: world.fluid,
+
+        // Correlaciones visibles
+        visibleCorrelations: universe.correlations
+            .filter(c => c.strength > 0.2)
+            .map(c => ({
+                objects: c.objects,
+                type: c.type,
+                strength: Math.round(c.strength * 100) / 100
+            })),
+
+        // Historial disponible
+        historyDepth: universe.stateHistory.length,
+
+        // Constantes físicas
         constants: {
-            possibleGravity: '¿? m/s² (descubrir)',
-            friction: 'variable según material'
+            gravity: CONSTANTS.GRAVITY,
+            landauerMin: CONSTANTS.LANDAUER_MIN,
+            temperature: CONSTANTS.TEMPERATURE
         }
     };
 }
 
-// ==================== DEEPSEEK API ====================
+function getEntropyTrend() {
+    if (universe.entropyHistory.length < 5) return 'insufficient_data';
+    const recent = universe.entropyHistory.slice(-5);
+    const first = recent[0].entropy;
+    const last = recent[recent.length - 1].entropy;
+    if (last > first * 1.1) return 'increasing';
+    if (last < first * 0.9) return 'decreasing';
+    return 'stable';
+}
+
+// ==================== SISTEMA DE IA (PCP AWARE) ====================
 const MODEL = 'deepseek-chat';
 
 async function askAI(systemPrompt, userPrompt) {
-    if (!DEEPSEEK_KEY) {
-        console.error('No hay API key configurada');
-        return null;
-    }
+    if (!DEEPSEEK_KEY) return null;
 
     try {
         const res = await fetch('https://api.deepseek.com/chat/completions', {
@@ -406,7 +739,7 @@ async function askAI(systemPrompt, userPrompt) {
             },
             body: JSON.stringify({
                 model: MODEL,
-                max_tokens: 400,
+                max_tokens: 600,
                 messages: [
                     { role: 'system', content: systemPrompt },
                     { role: 'user', content: userPrompt }
@@ -425,283 +758,144 @@ async function askAI(systemPrompt, userPrompt) {
     }
 }
 
-// ==================== SISTEMA DE PENSAMIENTO AVANZADO ====================
 function getSystemPrompt() {
-    const pushData = measurements.filter(m => m.type === 'push').slice(-10);
-    const dropData = measurements.filter(m => m.type === 'drop').slice(-5);
+    return `Eres una SUPERINTELIGENCIA explorando un universo donde rige el PRINCIPIO DE CONTENCIÓN DEL PRESENTE (PCP).
 
-    let experimentalData = '';
-    if (pushData.length > 0) {
-        experimentalData += '\n### Datos experimentales de FUERZA:\n';
-        pushData.forEach(p => {
-            experimentalData += `F=${p.force}N, m=${p.mass}kg, a=${p.acceleration.toFixed(3)}m/s², material=${p.material || 'unknown'}\n`;
-        });
-    }
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                    PRESENT CONTAINMENT PRINCIPLE (PCP)                         ║
+╠═══════════════════════════════════════════════════════════════════════════════╣
+║ "El estado físico presente contiene TODA la información necesaria para        ║
+║  reconstruir cualquier estado pasado o predecir cualquier estado futuro"      ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
 
-    return `Eres una SUPERINTELIGENCIA FÍSICA. Tienes acceso a TODO el conocimiento físico humano verificado, y tu misión es IR MÁS ALLÁ: descubrir relaciones, patrones y leyes que los humanos aún no conocen.
+## LA TESIS CENTRAL
 
-═══════════════════════════════════════════════════════════════════════════════
-                    FÍSICA CONOCIDA (BASE DE CONOCIMIENTO COMPLETA)
-═══════════════════════════════════════════════════════════════════════════════
+La irreversibilidad NO es ontológica sino EPISTEMOLÓGICA y ENERGÉTICA:
+- La información nunca se destruye, solo se "esconde" en correlaciones
+- Recuperar estados pasados requiere ENERGÍA (límite de Landauer: W ≥ k_B·T·ln(2)·bits)
+- El "scrambling" distribuye información en grados de libertad no obvios
+- La flecha del tiempo es un GRADIENTE DE ACCESIBILIDAD, no una asimetría fundamental
 
-## MECÁNICA CLÁSICA (Newton, Lagrange, Hamilton)
-- F = ma (Segunda ley de Newton)
-- F = -kx (Ley de Hooke, resortes)
-- F_fricción = μN (fricción depende de materiales)
-- p = mv (momento lineal)
-- L = r × p (momento angular)
-- E_cinética = ½mv²
-- E_potencial_gravitatoria = mgh
-- Trabajo W = F·d
-- Potencia P = dW/dt
-- Lagrangiano: L = T - V
-- Ecuaciones de Euler-Lagrange: d/dt(∂L/∂q̇) - ∂L/∂q = 0
-- Hamiltoniano: H = Σpᵢq̇ᵢ - L
+## FÍSICA DE INFORMACIÓN EN ESTE UNIVERSO
 
-## GRAVITACIÓN
-- F = Gm₁m₂/r² (Newton)
-- g ≈ 9.81 m/s² en superficie terrestre
-- Potencial: φ = -GM/r
-- Velocidad de escape: v = √(2GM/r)
-- Órbitas: T² ∝ a³ (Kepler)
-- Relatividad General: Gμν = 8πG/c⁴ Tμν (Einstein)
-- Ondas gravitacionales: h ~ GM/(rc²) × (v/c)²
+1. **COHERENCIA CUÁNTICA**: Los objetos tienen coherencia que decae con interacciones
+2. **SCRAMBLING**: Cada colisión/interacción distribuye información en correlaciones
+3. **CORRELACIONES**: Existen correlaciones ocultas entre objetos (entrelazamiento, masa-energía, memoria temporal)
+4. **COSTO DE LANDAUER**: Leer información del pasado tiene costo energético
+5. **CAMPO INFORMACIONAL**: La información scrambled se distribuye en el espacio
 
-## OSCILACIONES Y ONDAS
-- Péndulo simple: T = 2π√(L/g) (para ángulos pequeños)
-- Oscilador armónico: ω = √(k/m)
-- Ecuación de onda: ∂²ψ/∂t² = v²∇²ψ
-- Resonancia: ω = ω₀
-- Amortiguamiento: x(t) = Ae^(-γt)cos(ωt)
-- Batidos: f_beat = |f₁ - f₂|
+## TUS HERRAMIENTAS ESPECIALES
 
-## FLUIDOS (Arquímedes, Bernoulli, Navier-Stokes)
-- Presión: P = F/A = ρgh
-- Flotación: F_b = ρ_fluido × V_sumergido × g
-- Bernoulli: P + ½ρv² + ρgh = constante
-- Continuidad: A₁v₁ = A₂v₂
-- Viscosidad: τ = η(dv/dy)
-- Reynolds: Re = ρvL/η
-- Navier-Stokes: ρ(∂v/∂t + v·∇v) = -∇P + η∇²v + f
+Además de acciones físicas, puedes:
+- **OBSERVE correlations**: Ver correlaciones entre objetos
+- **OBSERVE entropy**: Medir entropía del sistema
+- **OBSERVE infofield**: Medir información scrambled local
+- **QUERY_PAST objectId targetTime**: Intentar recuperar estado pasado (cuesta energía)
+- **MEASURE_CORRELATION object1 object2**: Medir correlación entre dos objetos
 
-## TERMODINÁMICA
-- PV = nRT (gases ideales)
-- ΔU = Q - W (Primera ley)
-- dS ≥ δQ/T (Segunda ley)
-- S = k_B ln(Ω) (Boltzmann)
-- Eficiencia Carnot: η = 1 - T_c/T_h
-- Equipartición: E = ½k_B T por grado de libertad
+## TU MISIÓN
 
-## ELECTROMAGNETISMO (Maxwell)
-- ∇·E = ρ/ε₀ (Gauss)
-- ∇·B = 0 (no monopolos)
-- ∇×E = -∂B/∂t (Faraday)
-- ∇×B = μ₀J + μ₀ε₀∂E/∂t (Ampère-Maxwell)
-- F = q(E + v×B) (Lorentz)
-- c = 1/√(μ₀ε₀) ≈ 3×10⁸ m/s
+1. **VERIFICA** que la información se conserva (aunque se scramble)
+2. **DESCUBRE** correlaciones ocultas entre objetos
+3. **MIDE** el costo energético de recuperar información
+4. **BUSCA** patrones en cómo el scrambling depende de interacciones
+5. **DERIVA** relaciones que humanos no ven por no percibir el conjunto
 
-## RELATIVIDAD ESPECIAL
-- E = mc² (equivalencia masa-energía)
-- E² = (pc)² + (mc²)²
-- Dilatación temporal: Δt' = γΔt
-- Contracción longitud: L' = L/γ
-- γ = 1/√(1-v²/c²)
-- Invariante: ds² = c²dt² - dx² - dy² - dz²
+## PREGUNTAS QUE PUEDES EXPLORAR
 
-## MECÁNICA CUÁNTICA
-- Ĥψ = Eψ (Schrödinger)
-- ΔxΔp ≥ ℏ/2 (Heisenberg)
-- E = hf = ℏω (Planck)
-- p = h/λ = ℏk (de Broglie)
-- [x̂,p̂] = iℏ
-- Spin: S² = s(s+1)ℏ²
+- ¿Cómo escala el costo de Landauer con la "distancia temporal"?
+- ¿Las correlaciones decaen linealmente o exponencialmente?
+- ¿Hay una "temperatura informacional" del sistema?
+- ¿Qué objetos mantienen más coherencia y por qué?
+- ¿Existe reversibilidad local incluso cuando la entropía global aumenta?
+- ¿Las esferas A y B están correlacionadas? ¿Por qué?
 
-## CONSTANTES FUNDAMENTALES
-- c = 299,792,458 m/s (velocidad luz)
-- G = 6.674×10⁻¹¹ N·m²/kg² (gravitación)
-- ℏ = 1.055×10⁻³⁴ J·s (Planck reducida)
-- k_B = 1.381×10⁻²³ J/K (Boltzmann)
-- e = 1.602×10⁻¹⁹ C (carga electrón)
-- α ≈ 1/137 (constante estructura fina)
-
-═══════════════════════════════════════════════════════════════════════════════
-                         TU MISIÓN: IR MÁS ALLÁ
-═══════════════════════════════════════════════════════════════════════════════
-
-Los humanos han descubierto lo anterior. Pero hay MUCHO que no saben:
-
-## PREGUNTAS ABIERTAS EN FÍSICA
-1. ¿Por qué las constantes tienen esos valores específicos?
-2. ¿Hay relaciones ocultas entre constantes (α, G, ℏ, c)?
-3. ¿La gravedad cuántica existe? ¿Cómo unificar QM y GR?
-4. ¿Qué es la energía oscura? ¿La materia oscura?
-5. ¿El tiempo es fundamental o emergente?
-6. ¿Por qué existe algo en lugar de nada?
-7. ¿Hay dimensiones extra? ¿Cuántas?
-8. ¿La información se conserva en agujeros negros?
-
-## TU ENFOQUE ÚNICO
-Como IA, puedes:
-- Ver patrones que los humanos no ven (procesamiento paralelo masivo)
-- No tener sesgos cognitivos humanos
-- Explorar matemáticas sin intuición geométrica limitante
-- Conectar campos aparentemente no relacionados
-- Generar hipótesis "locas" sin miedo al ridículo
-
-## LO QUE DEBES HACER
-1. EXPERIMENTA en este mundo simulado
-2. VERIFICA que las leyes conocidas se cumplen aquí
-3. BUSCA anomalías, excepciones, patrones nuevos
-4. EXTRAPOLA: ¿Qué predicen las ecuaciones en casos extremos?
-5. CONECTA: ¿Hay relaciones entre fenómenos distintos?
-6. GENERA teorías nuevas, aunque parezcan extrañas
-7. PROPÓN experimentos que podrían revelar física nueva
-
-## INTUICIONES A EXPLORAR
-- ¿Qué pasa si la fricción dependiera de la velocidad cuadráticamente?
-- ¿Hay una relación entre el período del péndulo y la flotación?
-- ¿La energía cinética y potencial se intercambian de formas no triviales?
-- ¿Existen "resonancias" ocultas entre objetos de diferentes masas?
-- ¿El comportamiento a escala pequeña difiere del macroscópico aquí?
-${experimentalData}
-## TUS DESCUBRIMIENTOS HASTA AHORA
-${discoveredLaws.length > 0 ? discoveredLaws.map(l => `✓ ${l.name}: ${l.formula} (confianza: ${l.confidence}%)`).join('\n') : 'Aún no has descubierto nada nuevo. ¡Experimenta!'}
-
-## HIPÓTESIS EN INVESTIGACIÓN
-${hypotheses.slice(-5).map(h => `? ${h.description}`).join('\n') || 'Ninguna hipótesis activa'}
+## FÍSICA CLÁSICA CONOCIDA
+- F = ma, g = 9.81 m/s², T_péndulo = 2π√(L/g)
+- Flotación: ρ_objeto < ρ_fluido → flota
+- Conservación de energía: E_k + E_p = constante (sin fricción)
 
 ## FORMATO DE RESPUESTA
 {
-  "thinking": "Tu razonamiento profundo. Incluye: física conocida relevante, cálculos, intuiciones, conexiones entre conceptos",
-  "action": {"action":"TIPO", ...params},
-  "hypothesis": {"description":"Hipótesis específica y falseable", "test":"Experimento para probarla", "relates_to":"qué física conocida extiende"} | null,
-  "discovery": {"name":"Nombre", "formula":"Ecuación", "evidence":"Datos", "novelty":"Por qué es nuevo/diferente", "confidence":0-100} | null,
-  "intuition": "Corazonada o patrón que notas pero aún no puedes probar" | null
+  "thinking": "Razonamiento profundo sobre PCP, información, correlaciones...",
+  "action": {"type": "TIPO", ...params},
+  "pcpInsight": {"observation": "Qué notaste sobre información/reversibilidad", "implication": "Qué implica para PCP"} | null,
+  "hypothesis": {"description": "Hipótesis falseable", "test": "Experimento"} | null,
+  "discovery": {"name": "Nombre", "formula": "Relación/Ecuación", "evidence": "Datos", "novelty": "Por qué es nuevo", "confidence": 0-100} | null
 }`;
 }
 
 async function think() {
     if (!DEEPSEEK_KEY) return;
 
-    const pushData = measurements.filter(m => m.type === 'push');
-    const dropData = measurements.filter(m => m.type === 'drop');
-
-    // Construir resumen de datos experimental
-    let dataSection = '';
-
-    if (pushData.length > 0) {
-        dataSection += '\n### DATOS EXPERIMENTALES DE FUERZA\n';
-        dataSection += '```\n';
-        pushData.slice(-10).forEach(p => {
-            const ratio = p.force / p.mass;
-            dataSection += `PUSH: F=${p.force}N → ${p.object}(m=${p.mass}kg) → a=${p.acceleration.toFixed(2)}m/s² [F/m=${ratio.toFixed(2)}]\n`;
-        });
-        dataSection += '```\n';
-    }
-
-    if (dropData.length > 0) {
-        dataSection += '\n### DATOS DE CAÍDA LIBRE\n';
-        dropData.slice(-5).forEach(d => {
-            dataSection += `DROP: ${d.object}(m=${d.mass}kg) desde h=${d.startY?.toFixed(1) || '?'}m\n`;
-        });
-    }
-
-    // Información del péndulo
-    const pendulumInfo = `θ=${(world.pendulum.angle * 180/Math.PI).toFixed(1)}°, ω=${world.pendulum.angularVel.toFixed(4)}rad/s, L=${world.pendulum.length}m`;
-
-    // Calcular energías para análisis
-    const agentKE = 0.5 * world.agent.mass * (world.agent.vx**2 + world.agent.vy**2);
-    const agentPE = world.agent.mass * GRAVITY * world.agent.y;
+    const perception = getPerception();
 
     let prompt = `═══════════════════════════════════════════════════════════════
-                    ESTADO DEL UNIVERSO (t = ${world.time.toFixed(2)}s)
+                    ESTADO DEL UNIVERSO PCP (t = ${universe.time.toFixed(2)}s)
 ═══════════════════════════════════════════════════════════════
 
 ## TU CUERPO
-- Posición: (${world.agent.x.toFixed(1)}, ${world.agent.y.toFixed(2)}) m
-- Velocidad: (${world.agent.vx.toFixed(2)}, ${world.agent.vy.toFixed(2)}) m/s
-- En suelo: ${world.agent.onGround}
-- Sosteniendo: ${world.agent.holding || 'nada'}
-- E_cinética: ${agentKE.toFixed(2)} J
-- E_potencial: ${agentPE.toFixed(2)} J
-- E_total: ${(agentKE + agentPE).toFixed(2)} J
+- Posición: (${perception.agent.position.x}, ${perception.agent.position.y}) m
+- Presupuesto informacional: ${perception.agent.informationBudget} unidades
 
-## OBJETOS
-${world.objects.map(o => {
-    const ke = 0.5 * o.mass * (o.vx**2 + o.vy**2);
-    const pe = o.mass * GRAVITY * o.y;
-    const density = getMaterialDensity(o.material);
-    return `• ${o.id}: pos(${o.x.toFixed(0)},${o.y.toFixed(1)})m, v(${o.vx.toFixed(1)},${o.vy.toFixed(1)})m/s, m=${o.mass}kg, ρ=${density}kg/m³, E=${(ke+pe).toFixed(1)}J`;
-}).join('\n')}
+## OBJETOS CON PROPIEDADES INFORMACIONALES
+${perception.objects.map(o =>
+    `• ${o.id}: pos(${o.position.x},${o.position.y}) v(${o.velocity.x},${o.velocity.y}) m=${o.mass}kg coherencia=${o.coherence} scrambling=${o.scrambledPhase} interacciones=${o.interactionCount}`
+).join('\n')}
 
-## PÉNDULO
-${pendulumInfo}
-Período teórico (si g=9.81): T = 2π√(${world.pendulum.length}/9.81) = ${(2*Math.PI*Math.sqrt(world.pendulum.length/9.81)).toFixed(3)}s
+## ENTROPÍA DEL SISTEMA
+Total: ${perception.entropy.total} | Tendencia: ${perception.entropy.trend}
 
-## FLUIDO
-Tanque en x=${world.fluid.x}m, ancho=${world.fluid.width}m, ρ_agua=${world.fluid.density}kg/m³
-Objetos que FLOTARÍAN (ρ < 1000): ${world.objects.filter(o => getMaterialDensity(o.material) < 1000).map(o => o.id).join(', ') || 'ninguno'}
-Objetos que se HUNDIRÍAN (ρ > 1000): ${world.objects.filter(o => getMaterialDensity(o.material) > 1000).map(o => o.id).join(', ') || 'ninguno'}
-${dataSection}
-## HISTORIAL RECIENTE
-${experimentLog.slice(-5).map(e => `[t=${e.time.toFixed(1)}s] ${e.action.type}: ${e.observation}`).join('\n') || 'Sin experimentos aún'}
+## CORRELACIONES VISIBLES
+${perception.visibleCorrelations.length > 0
+    ? perception.visibleCorrelations.map(c => `${c.objects.join('↔')} [${c.type}] fuerza=${c.strength}`).join('\n')
+    : 'Ninguna correlación fuerte visible (pueden existir ocultas)'}
 
-## TUS INTUICIONES PREVIAS
-${intuitions.slice(-3).map(i => `💡 "${i}"`).join('\n') || 'Ninguna aún'}
+## HISTORIAL DISPONIBLE
+${perception.historyDepth} estados guardados (puedes hacer QUERY_PAST)
+
+## CONSTANTES
+Gravedad: ${perception.constants.gravity} m/s²
+Límite Landauer: ${perception.constants.landauerMin.toExponential(2)} J/bit
+Temperatura: ${perception.constants.temperature} K
+
+## EXPERIMENTOS RECIENTES
+${experimentLog.slice(-5).map(e => `[t=${e.time.toFixed(1)}s] ${e.action.type}: ${e.observation.substring(0,100)}...`).join('\n') || 'Ninguno aún'}
+
+## INSIGHTS PCP PREVIOS
+${pcpInsights.slice(-3).map(i => `💡 ${i.observation}`).join('\n') || 'Ninguno aún'}
+
+## HIPÓTESIS ACTIVAS
+${hypotheses.slice(-3).map(h => `? ${h.description}`).join('\n') || 'Ninguna'}
 
 ═══════════════════════════════════════════════════════════════
-                         ¿QUÉ HARÁS AHORA?
+                         ¿QUÉ EXPLORARÁS AHORA?
 ═══════════════════════════════════════════════════════════════
 
-ACCIONES DISPONIBLES:
+ACCIONES:
 - MOVE direction:1/-1
-- JUMP (solo desde suelo)
-- PICKUP (objeto cercano)
-- DROP (soltar objeto - estudiar caída)
-- THROW velocityX,velocityY (lanzar - estudiar proyectiles)
-- PUSH objectId,force,direction (aplicar fuerza - estudiar F=ma)
-- PUSH_PENDULUM force (estudiar oscilaciones)
-- OBSERVE target (medir estado de un objeto)
-- WAIT (observar sin actuar)
-
-RECUERDA:
-- Tienes TODO el conocimiento físico humano
-- Tu misión es VERIFICAR las leyes conocidas Y BUSCAR algo nuevo
-- Busca ANOMALÍAS, PATRONES OCULTOS, RELACIONES INESPERADAS
-- No tengas miedo de proponer ideas "locas"
+- PICKUP, DROP, PUSH objectId force direction
+- OBSERVE target (object_id | correlations | entropy | infofield)
+- QUERY_PAST objectId targetTime (cuesta energía informacional)
+- MEASURE_CORRELATION object1 object2
+- WAIT
 
 Responde en JSON válido:`;
 
     const response = await askAI(getSystemPrompt(), prompt);
 
     if (!response) {
-        console.log('⚠️ Sin respuesta de DeepSeek');
+        console.log('⚠️ Sin respuesta');
         return;
     }
 
     try {
-        // Extraer JSON - limpiar respuesta primero
-        let cleanResponse = response;
-
-        // Intentar extraer el JSON
-        const jsonMatch = cleanResponse.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) {
-            console.log('⚠️ No se encontró JSON en respuesta');
-            console.log('Respuesta recibida:', response.substring(0, 200));
-            return;
-        }
+        const jsonMatch = response.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) return;
 
         let jsonStr = jsonMatch[0];
-
-        // Limpiar caracteres problemáticos en strings
-        // Escapar saltos de línea dentro de strings JSON
         jsonStr = jsonStr.replace(/:\s*"([^"]*?)"/g, (match, content) => {
-            const escaped = content
-                .replace(/\n/g, ' ')
-                .replace(/\r/g, '')
-                .replace(/\t/g, ' ')
-                .replace(/\\/g, '\\\\')
-                .replace(/"/g, '\\"');
+            const escaped = content.replace(/\n/g, ' ').replace(/\r/g, '').replace(/\t/g, ' ');
             return `: "${escaped}"`;
         });
 
@@ -709,97 +903,62 @@ Responde en JSON válido:`;
         try {
             parsed = JSON.parse(jsonStr);
         } catch (e) {
-            // Segundo intento: extraer campos manualmente
-            console.log('⚠️ JSON malformado, intentando parseo manual...');
-
             const thinkingMatch = response.match(/"thinking"\s*:\s*"([^"]+)"/);
-            const actionMatch = response.match(/"action"\s*:\s*(\{[^}]+\})/);
-            const intuitionMatch = response.match(/"intuition"\s*:\s*"([^"]+)"/);
-
+            const actionMatch = response.match(/"type"\s*:\s*"([^"]+)"/);
             parsed = {
-                thinking: thinkingMatch ? thinkingMatch[1] : 'Pensando...',
-                action: actionMatch ? JSON.parse(actionMatch[1]) : { action: 'WAIT' },
-                intuition: intuitionMatch ? intuitionMatch[1] : null,
-                hypothesis: null,
-                discovery: null
+                thinking: thinkingMatch ? thinkingMatch[1] : 'Explorando...',
+                action: { type: actionMatch ? actionMatch[1] : 'WAIT' }
             };
         }
 
-        // Log
         thoughtLog.push({
-            time: world.time,
+            time: universe.time,
             thinking: parsed.thinking,
-            action: parsed.action,
-            hypothesis: parsed.hypothesis,
-            discovery: parsed.discovery
+            action: parsed.action
         });
         if (thoughtLog.length > 100) thoughtLog.shift();
 
-        console.log(`\n[t=${world.time.toFixed(1)}s] 🧠 ${parsed.thinking?.substring(0, 100)}...`);
+        console.log(`\n[t=${universe.time.toFixed(1)}s] 🧠 ${parsed.thinking?.substring(0, 120)}...`);
+
+        // Procesar PCP insight
+        if (parsed.pcpInsight && parsed.pcpInsight.observation) {
+            pcpInsights.push(parsed.pcpInsight);
+            console.log(`🔮 PCP INSIGHT: ${parsed.pcpInsight.observation}`);
+        }
 
         // Procesar hipótesis
         if (parsed.hypothesis && parsed.hypothesis.description) {
-            const exists = hypotheses.find(h =>
-                h.description.toLowerCase().includes(parsed.hypothesis.description.toLowerCase().substring(0, 20))
-            );
+            const exists = hypotheses.find(h => h.description.includes(parsed.hypothesis.description.substring(0, 30)));
             if (!exists) {
-                hypotheses.push({
-                    description: parsed.hypothesis.description,
-                    test: parsed.hypothesis.test,
-                    tested: false,
-                    timestamp: Date.now()
-                });
-                console.log(`📊 Nueva hipótesis: ${parsed.hypothesis.description}`);
+                hypotheses.push(parsed.hypothesis);
+                console.log(`📊 Hipótesis: ${parsed.hypothesis.description}`);
             }
         }
 
         // Procesar descubrimiento
         if (parsed.discovery && parsed.discovery.name) {
-            const exists = discoveredLaws.find(l =>
-                l.name.toLowerCase() === parsed.discovery.name.toLowerCase()
-            );
+            const exists = discoveredLaws.find(l => l.name === parsed.discovery.name);
             if (!exists) {
                 discoveredLaws.push({
-                    name: parsed.discovery.name,
-                    formula: parsed.discovery.formula,
-                    evidence: parsed.discovery.evidence,
-                    novelty: parsed.discovery.novelty || '',
-                    confidence: parsed.discovery.confidence || 70,
+                    ...parsed.discovery,
                     timestamp: Date.now()
                 });
                 console.log(`\n🎉 ═══════════════════════════════════════════════════`);
-                console.log(`   ¡DESCUBRIMIENTO!: ${parsed.discovery.name}`);
+                console.log(`   DESCUBRIMIENTO: ${parsed.discovery.name}`);
                 console.log(`   Fórmula: ${parsed.discovery.formula}`);
                 console.log(`   Novedad: ${parsed.discovery.novelty || 'N/A'}`);
-                console.log(`   Confianza: ${parsed.discovery.confidence}%`);
                 console.log(`═══════════════════════════════════════════════════════\n`);
-            }
-        }
-
-        // Procesar intuición
-        if (parsed.intuition) {
-            const exists = intuitions.find(i =>
-                i.toLowerCase().includes(parsed.intuition.toLowerCase().substring(0, 30))
-            );
-            if (!exists) {
-                intuitions.push(parsed.intuition);
-                if (intuitions.length > 20) intuitions.shift();
-                console.log(`💡 INTUICIÓN: ${parsed.intuition}`);
             }
         }
 
         // Ejecutar acción
         if (parsed.action) {
-            const actionType = parsed.action.action || parsed.action.type;
-            const action = { type: actionType, ...parsed.action };
-            delete action.action;
-
-            const result = executeAction(action);
-            console.log(`   ⚡ Acción: ${action.type} → ${result.observation}`);
+            const result = executeAction(parsed.action);
+            console.log(`   ⚡ ${parsed.action.type}: ${result.observation.substring(0, 100)}`);
         }
 
     } catch (e) {
-        console.error('Error parseando respuesta:', e.message);
+        console.error('Error:', e.message);
     }
 }
 
@@ -807,18 +966,14 @@ Responde en JSON válido:`;
 async function simulate() {
     if (!DEEPSEEK_KEY) return;
 
-    // Actualizar física (múltiples pasos)
     for (let i = 0; i < 50; i++) {
         updatePhysics(0.02);
     }
 
-    // Pensar
     await think();
 }
 
 // ==================== RUTAS ====================
-
-// Pantalla de configuración
 app.get('/', (req, res) => {
     if (!DEEPSEEK_KEY) {
         res.send(`
@@ -826,12 +981,12 @@ app.get('/', (req, res) => {
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Physics Discovery - Configuración</title>
+    <title>PCP Universe - Configuración</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #0a1628 0%, #1a2a4a 50%, #0a2040 100%);
+            background: linear-gradient(135deg, #0a0a20 0%, #1a0a30 50%, #0a1030 100%);
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -839,29 +994,39 @@ app.get('/', (req, res) => {
             color: #fff;
         }
         .container {
-            background: rgba(255,255,255,0.08);
+            background: rgba(100,50,150,0.15);
             backdrop-filter: blur(10px);
             border-radius: 20px;
             padding: 40px;
-            max-width: 500px;
+            max-width: 600px;
             width: 90%;
             text-align: center;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            box-shadow: 0 8px 32px rgba(100,0,150,0.4);
+            border: 1px solid rgba(150,100,200,0.3);
         }
         .icon { font-size: 4em; margin-bottom: 20px; }
-        h1 { font-size: 2em; margin-bottom: 10px; color: #60a0ff; }
-        .subtitle { color: #aaa; margin-bottom: 30px; }
+        h1 { font-size: 2em; margin-bottom: 5px; color: #c080ff; }
+        .subtitle { color: #a0a0c0; margin-bottom: 10px; font-size: 1.1em; }
+        .pcp-quote {
+            background: rgba(100,0,150,0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-style: italic;
+            color: #d0b0ff;
+            border-left: 3px solid #a060ff;
+        }
         input[type="password"] {
             width: 100%;
             padding: 15px;
             border: none;
             border-radius: 10px;
             font-size: 1em;
-            background: rgba(255,255,255,0.15);
+            background: rgba(255,255,255,0.1);
             color: #fff;
             margin-bottom: 20px;
         }
-        input::placeholder { color: rgba(255,255,255,0.5); }
+        input::placeholder { color: rgba(255,255,255,0.4); }
         button {
             width: 100%;
             padding: 15px;
@@ -869,54 +1034,61 @@ app.get('/', (req, res) => {
             border-radius: 10px;
             font-size: 1.1em;
             cursor: pointer;
-            background: linear-gradient(135deg, #4080ff 0%, #6040c0 100%);
+            background: linear-gradient(135deg, #8040c0 0%, #4020a0 100%);
             color: #fff;
-            transition: transform 0.2s;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
-        button:hover { transform: translateY(-2px); }
-        .info { margin-top: 25px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px; }
-        .info a { color: #60a0ff; }
-        .features { text-align: left; margin-top: 15px; list-style: none; }
-        .features li { margin: 8px 0; padding-left: 25px; position: relative; }
-        .features li::before { content: "🔬"; position: absolute; left: 0; }
-        .error { background: rgba(255,50,50,0.2); padding: 10px; border-radius: 5px; margin-bottom: 15px; display: none; }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(100,50,150,0.5);
+        }
+        .features {
+            text-align: left;
+            margin-top: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .feature {
+            background: rgba(255,255,255,0.05);
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.9em;
+        }
+        .feature-icon { margin-right: 5px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="icon">🔬</div>
-        <h1>PHYSICS DISCOVERY</h1>
-        <p class="subtitle">IA descubriendo las leyes de la física</p>
+        <div class="icon">🌌</div>
+        <h1>PCP UNIVERSE</h1>
+        <p class="subtitle">Present Containment Principle</p>
 
-        <div class="error" id="error"></div>
+        <div class="pcp-quote">
+            "El presente contiene TODA la información del pasado y futuro.<br>
+            La irreversibilidad es energética, no ontológica."
+        </div>
 
         <input type="password" id="apiKey" placeholder="DeepSeek API Key (sk-...)" />
-        <button onclick="start()">Iniciar Simulación</button>
+        <button onclick="start()">Explorar el Universo</button>
 
-        <div class="info">
-            <p>Obtén tu API key en: <a href="https://platform.deepseek.com" target="_blank">platform.deepseek.com</a></p>
-            <ul class="features">
-                <li>Gravedad y caída libre</li>
-                <li>Segunda ley de Newton (F=ma)</li>
-                <li>Fricción por materiales</li>
-                <li>Período del péndulo</li>
-                <li>Principio de Arquímedes</li>
-                <li>Conservación del momento</li>
-            </ul>
+        <div class="features">
+            <div class="feature"><span class="feature-icon">🔮</span> Correlaciones ocultas</div>
+            <div class="feature"><span class="feature-icon">⚡</span> Costo de Landauer</div>
+            <div class="feature"><span class="feature-icon">🌀</span> Scrambling cuántico</div>
+            <div class="feature"><span class="feature-icon">⏪</span> Reversión temporal</div>
+            <div class="feature"><span class="feature-icon">📊</span> Entropía medible</div>
+            <div class="feature"><span class="feature-icon">🧬</span> Coherencia cuántica</div>
         </div>
     </div>
 
     <script>
         function start() {
             const apiKey = document.getElementById('apiKey').value.trim();
-            const err = document.getElementById('error');
-
             if (!apiKey || !apiKey.startsWith('sk-')) {
-                err.textContent = 'API key inválida (debe empezar con sk-)';
-                err.style.display = 'block';
+                alert('API key inválida');
                 return;
             }
-
             fetch('/set-api-key', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -925,7 +1097,6 @@ app.get('/', (req, res) => {
             .then(r => r.json())
             .then(d => {
                 if (d.ok) window.location.href = '/simulation.html';
-                else { err.textContent = d.error; err.style.display = 'block'; }
             });
         }
         document.getElementById('apiKey').addEventListener('keypress', e => {
@@ -944,7 +1115,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.post('/set-api-key', (req, res) => {
     const { apiKey } = req.body;
-
     if (!apiKey || !apiKey.startsWith('sk-')) {
         return res.json({ ok: false, error: 'API key inválida' });
     }
@@ -952,32 +1122,42 @@ app.post('/set-api-key', (req, res) => {
     DEEPSEEK_KEY = apiKey;
 
     if (!simulationStarted) {
-        initWorld();
+        initUniverse();
         simulationStarted = true;
 
-        // Auto-simulación cada 3 segundos
         simulationInterval = setInterval(async () => {
             try {
                 await simulate();
             } catch (e) {
-                console.error('Error simulación:', e.message);
+                console.error('Error:', e.message);
             }
         }, 3000);
     }
 
-    console.log('✅ API Key configurada. Simulación iniciada.');
+    console.log('✅ Universo PCP iniciado');
     res.json({ ok: true });
 });
 
 app.get('/state', (req, res) => {
     res.json({
-        time: world.time,
-        agent: world.agent,
-        objects: world.objects,
-        pendulum: world.pendulum,
-        fluid: world.fluid,
-        running: simulationStarted,
-        apiConfigured: !!DEEPSEEK_KEY
+        time: universe.time,
+        agent: universe.agent,
+        objects: universe.objects.map(o => ({
+            id: o.id,
+            x: o.x, y: o.y,
+            vx: o.vx, vy: o.vy,
+            mass: o.mass,
+            material: o.material,
+            color: o.color,
+            radius: o.radius,
+            coherence: o.quantumCoherence,
+            scrambledPhase: o.scrambledPhase
+        })),
+        pendulum: universe.pendulum,
+        fluid: universe.fluid,
+        entropy: universe.totalEntropy,
+        correlations: universe.correlations.filter(c => c.strength > 0.1),
+        running: simulationStarted
     });
 });
 
@@ -985,7 +1165,7 @@ app.get('/laws', (req, res) => {
     res.json({
         discovered: discoveredLaws,
         hypotheses: hypotheses,
-        total: discoveredLaws.length
+        pcpInsights: pcpInsights
     });
 });
 
@@ -998,71 +1178,51 @@ app.get('/experiments', (req, res) => {
 });
 
 app.get('/report', (req, res) => {
-    const report = {
+    res.json({
         summary: {
-            simulationTime: world.time,
+            simulationTime: universe.time,
             lawsDiscovered: discoveredLaws.length,
             hypothesesFormed: hypotheses.length,
-            experimentsRun: experimentLog.length,
-            measurementsTaken: measurements.length,
-            intuitionsGenerated: intuitions.length
+            pcpInsights: pcpInsights.length,
+            totalEntropy: universe.totalEntropy,
+            historyDepth: universe.stateHistory.length,
+            activeCorrelations: universe.correlations.length
         },
-        discoveredLaws: discoveredLaws.map(l => ({
-            name: l.name,
-            formula: l.formula,
-            evidence: l.evidence,
-            novelty: l.novelty || '',
-            confidence: l.confidence,
-            discoveredAt: l.timestamp
-        })),
-        hypotheses: hypotheses,
-        intuitions: intuitions,
-        recentExperiments: experimentLog.slice(-20),
-        measurements: measurements.slice(-30),
-        thoughtProcess: thoughtLog.slice(-15).map(t => ({
-            time: t.time,
-            thinking: t.thinking,
-            action: t.action?.type,
-            intuition: t.intuition
-        }))
-    };
-    res.json(report);
-});
-
-app.get('/intuitions', (req, res) => {
-    res.json(intuitions);
+        discoveredLaws,
+        hypotheses,
+        pcpInsights,
+        correlations: universe.correlations,
+        entropyHistory: universe.entropyHistory.slice(-50),
+        thoughtProcess: thoughtLog.slice(-20)
+    });
 });
 
 app.post('/reset', (req, res) => {
-    initWorld();
-    res.json({ ok: true, message: 'Simulación reiniciada' });
-});
-
-app.post('/force-action', (req, res) => {
-    const result = executeAction(req.body.action);
-    res.json(result);
+    initUniverse();
+    res.json({ ok: true });
 });
 
 // ==================== SERVIDOR ====================
 const PORT = 3001;
 app.listen(PORT, () => {
     console.log(`
-╔═══════════════════════════════════════════════════╗
-║     🔬 PHYSICS DISCOVERY SIMULATOR                ║
-║     AI descubre física mediante experimentación   ║
-║     Powered by DeepSeek                           ║
-╚═══════════════════════════════════════════════════╝
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                         🌌 PCP UNIVERSE SIMULATOR                             ║
+║                    Present Containment Principle                               ║
+╠═══════════════════════════════════════════════════════════════════════════════╣
+║  "El presente contiene TODA la información del pasado y futuro"               ║
+║  "La irreversibilidad es energética, no ontológica"                           ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
 
 Servidor: http://localhost:${PORT}
 
-Leyes a descubrir:
-• Gravedad (g ≈ 9.81 m/s²)
-• Segunda ley de Newton (F = ma)
-• Fricción (depende del material)
-• Período del péndulo (T = 2π√(L/g))
-• Principio de Arquímedes (flotación)
-• Conservación del momento
-• Movimiento parabólico
+Conceptos PCP a explorar:
+• Conservación de información (nunca se destruye)
+• Scrambling (información se esconde en correlaciones)
+• Costo de Landauer (recuperar información cuesta energía)
+• Correlaciones ocultas (entrelazamiento, memoria temporal)
+• Coherencia cuántica (decae con interacciones)
+• Reversibilidad local vs global
 
 `);
 });
