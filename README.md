@@ -164,6 +164,59 @@ This project explores:
 
 MIT
 
+---
+
+## Conexiones
+
+<table>
+<tr>
+<td width="50%">
+
+### El descubrimiento como destino
+
+> *"La curiosidad tiene su propia razón de existir."*
+
+La IA descubre F=ma. Pero esa ley ya existía antes de ser descubierta. ¿Estaba destinada a encontrarla?
+
+**[Are You There Reading?](https://github.com/gamogestionweb/Are-you-there-are-reading)** pregunta si el azar existe o todo está predeterminado. Si las leyes de la física ya están ahí, ¿descubrirlas es elección o inevitabilidad?
+
+</td>
+<td width="50%">
+
+### El presente contiene todo
+
+Si el presente contiene toda la información del pasado y futuro, entonces las leyes de la física ya estaban "escritas" en el estado inicial del universo.
+
+**[PCP Universe](https://github.com/gamogestionweb/pcp-universe)** valida esta idea en hardware cuántico real. La IA de Physics Discovery la descubre empíricamente.
+
+</td>
+</tr>
+<tr>
+<td>
+
+### Adam nombró los animales
+
+En **[Genesis Simulation](https://github.com/gamogestionweb/genesis-simulation)**, Adam nombra cada criatura. Aquí, la IA nombra cada ley.
+
+Nombrar es entender. Categorizar es controlar. Ambos proyectos exploran cómo la inteligencia da estructura al caos.
+
+</td>
+<td>
+
+### La observación cambia todo
+
+> *"Tú eres el escritor de tu vida, tú eres tus acciones de hoy."*
+
+En **[100 Días de una Vida](https://github.com/gamogestionweb/100-dias-de-una-vida)**, Abel observa su propia vida y la escribe. Aquí, la IA observa la física y la descubre.
+
+La observación consciente transforma la realidad en conocimiento.
+
+</td>
+</tr>
+</table>
+
+---
+
 ## Credits
 
 Built with:
