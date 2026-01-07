@@ -166,50 +166,50 @@ MIT
 
 ---
 
-## Conexiones
+## Connections
 
 <table>
 <tr>
 <td width="50%">
 
-### El descubrimiento como destino
+### Discovery as destiny
 
-> *"La curiosidad tiene su propia razón de existir."*
+> *"Curiosity has its own reason for existence."*
 
-La IA descubre F=ma. Pero esa ley ya existía antes de ser descubierta. ¿Estaba destinada a encontrarla?
+The AI discovers F=ma. But that law already existed before being discovered. Was it destined to find it?
 
-**[Are You There Reading?](https://github.com/gamogestionweb/Are-you-there-are-reading)** pregunta si el azar existe o todo está predeterminado. Si las leyes de la física ya están ahí, ¿descubrirlas es elección o inevitabilidad?
+**[Are You There Reading?](https://github.com/gamogestionweb/Are-you-there-are-reading)** asks whether chance exists or everything is predetermined. If the laws of physics are already there, is discovering them choice or inevitability?
 
 </td>
 <td width="50%">
 
-### El presente contiene todo
+### The present contains everything
 
-Si el presente contiene toda la información del pasado y futuro, entonces las leyes de la física ya estaban "escritas" en el estado inicial del universo.
+If the present contains all information from past and future, then the laws of physics were already "written" in the initial state of the universe.
 
-**[PCP Universe](https://github.com/gamogestionweb/pcp-universe)** valida esta idea en hardware cuántico real. La IA de Physics Discovery la descubre empíricamente.
+**[PCP Universe](https://github.com/gamogestionweb/pcp-universe)** validates this idea on real quantum hardware. The Physics Discovery AI discovers it empirically.
 
 </td>
 </tr>
 <tr>
 <td>
 
-### Adam nombró los animales
+### Adam named the animals
 
-En **[Genesis Simulation](https://github.com/gamogestionweb/genesis-simulation)**, Adam nombra cada criatura. Aquí, la IA nombra cada ley.
+In **[Genesis Simulation](https://github.com/gamogestionweb/genesis-simulation)**, Adam names every creature. Here, the AI names every law.
 
-Nombrar es entender. Categorizar es controlar. Ambos proyectos exploran cómo la inteligencia da estructura al caos.
+To name is to understand. To categorize is to control. Both projects explore how intelligence gives structure to chaos.
 
 </td>
 <td>
 
-### La observación cambia todo
+### Observation changes everything
 
-> *"Tú eres el escritor de tu vida, tú eres tus acciones de hoy."*
+> *"You are the writer of your life, you are your actions today."*
 
-En **[100 Días de una Vida](https://github.com/gamogestionweb/100-dias-de-una-vida)**, Abel observa su propia vida y la escribe. Aquí, la IA observa la física y la descubre.
+In **[100 Días de una Vida](https://github.com/gamogestionweb/100-dias-de-una-vida)**, Abel observes his own life and writes it. Here, the AI observes physics and discovers it.
 
-La observación consciente transforma la realidad en conocimiento.
+Conscious observation transforms reality into knowledge.
 
 </td>
 </tr>
