@@ -2,16 +2,25 @@
  * ORCHESTRATOR
  * Manages the multi-agent physics discovery system
  * Coordinates discussions, experiments, and theory validation
+ *
+ * REFACTORED: Uses modular components for parallel execution
  */
 
 const { createAgents } = require('./agents');
 const { ExplorationWorld } = require('./exploration-world');
 const { PHYSICS_KNOWLEDGE, UNEXPLAINED_PHENOMENA, MATHEMATICAL_STRUCTURES, CROSS_DOMAIN_CONNECTIONS } = require('./physics-knowledge-base');
+const { AgentPool } = require('./agents/agent-pool');
+const { TheoryManager } = require('./theories/theory-manager');
 const { v4: uuidv4 } = require('uuid');
+const config = require('./config.json');
 
 class Orchestrator {
-  constructor(deepseekApiKey, claudeApiKey, openaiApiKey) {
-    this.agents = createAgents(deepseekApiKey, claudeApiKey, openaiApiKey);
+  constructor(deepseekApiKey) {
+    this.agents = createAgents(deepseekApiKey);
+
+    // Remove synthesizer - not needed
+    delete this.agents.synthesizer;
+
     this.world = new ExplorationWorld();
     this.physicsKnowledge = {
       laws: PHYSICS_KNOWLEDGE,
@@ -20,17 +29,19 @@ class Orchestrator {
       connections: CROSS_DOMAIN_CONNECTIONS
     };
 
+    // Initialize modular components
+    this.agentPool = new AgentPool(this.agents);
+    this.theoryManager = new TheoryManager();
+
     this.sessions = [];
     this.currentSession = null;
-    this.theories = [];
     this.discussions = [];
-    this.discoveries = [];
     this.experimentResults = [];
 
     this.eventListeners = new Map();
     this.isRunning = false;
     this.cycleCount = 0;
-    this.language = 'en'; // Default language for agent deliberations
+    this.language = 'en';
   }
 
   // Set the language for agent deliberations
@@ -90,7 +101,7 @@ class Orchestrator {
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // MAIN EXPLORATION CYCLE
+  // MAIN EXPLORATION CYCLE - PARALLELIZED
   // ═══════════════════════════════════════════════════════════════════
   async runCycle() {
     if (!this.isRunning) return;
@@ -102,32 +113,35 @@ class Orchestrator {
       agentActions: [],
       discussions: [],
       theories: [],
-      experiments: []
+      experiments: [],
+      errors: []
     };
 
     this.emit('cycle_started', { cycleNumber: this.cycleCount });
 
     try {
-      // Phase 1: Each agent thinks independently
+      // Phase 1: All agents think IN PARALLEL with timeout
       const thinkingResults = await this.phaseIndependentThinking();
-      cycleData.agentActions = thinkingResults;
+      cycleData.agentActions = thinkingResults.results;
+      cycleData.errors.push(...thinkingResults.errors);
 
       // Phase 2: Process any proposed theories
-      const newTheories = await this.phaseProcessTheories(thinkingResults);
+      const newTheories = await this.phaseProcessTheories(thinkingResults.results);
       cycleData.theories = newTheories;
 
-      // Phase 3: Tenth Man challenges all theories
+      // Phase 3: Tenth Man challenges all theories IN PARALLEL
       if (newTheories.length > 0) {
         const challenges = await this.phaseTenthManChallenges(newTheories);
-        cycleData.discussions.push(...challenges);
+        cycleData.discussions.push(...challenges.results);
+        cycleData.errors.push(...challenges.errors);
       }
 
-      // Phase 4: Run any requested experiments
-      const experiments = await this.phaseRunExperiments(thinkingResults);
+      // Phase 4: Run any requested experiments IN PARALLEL
+      const experiments = await this.phaseRunExperiments(thinkingResults.results);
       cycleData.experiments = experiments;
 
       // Phase 5: Facilitate discussions between agents
-      const discussions = await this.phaseAgentDiscussions(thinkingResults);
+      const discussions = await this.phaseAgentDiscussions(thinkingResults.results);
       cycleData.discussions.push(...discussions);
 
       // Phase 6: Check for consensus and discoveries
@@ -139,7 +153,12 @@ class Orchestrator {
         this.currentSession.cycles.push(cycleData);
       }
 
-      this.emit('cycle_completed', cycleData);
+      this.emit('cycle_completed', {
+        cycleNumber: this.cycleCount,
+        theoriesCount: newTheories.length,
+        errorsCount: cycleData.errors.length,
+        duration: Date.now() - cycleData.timestamp
+      });
 
       // Advance world time
       this.world.advanceTime();
@@ -148,83 +167,107 @@ class Orchestrator {
 
     } catch (error) {
       this.emit('cycle_error', { error: error.message, cycleNumber: this.cycleCount });
-      throw error;
+      // Don't throw - allow cycle to continue
+      cycleData.errors.push({ phase: 'cycle', error: error.message });
+      return cycleData;
     }
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // PHASE 1: Independent Thinking
+  // PHASE 1: Independent Thinking - PARALLEL EXECUTION
   // ═══════════════════════════════════════════════════════════════════
   async phaseIndependentThinking() {
     const results = [];
+    const errors = [];
 
     // Create context for agents
     const context = {
       cycle: this.cycleCount,
-      recentTheories: this.theories.slice(-5),
-      recentDiscoveries: this.discoveries.slice(-3),
+      recentTheories: this.theoryManager.getRecentTheories(5),
+      recentDiscoveries: this.theoryManager.getRecentDiscoveries(3),
       availableExperiments: this.world.getAvailableExperiments(),
       availableData: this.world.getObservationalData(),
       unexplainedPhenomena: Object.keys(UNEXPLAINED_PHENOMENA)
     };
 
-    // Process agents one at a time so we can see each one's deliberation in real-time
-    const agentEntries = Object.entries(this.agents).filter(([key]) => key !== 'tenthMan');
+    // Get all theory-proposing agents (exclude tenthMan)
+    const theoryAgents = Object.keys(this.agents).filter(key => key !== 'tenthMan');
 
-    for (const [key, agent] of agentEntries) {
-      try {
-        this.emit('agent_thinking', {
-          agentName: agent.personality.name,
-          agentKey: key,
-          personality: agent.personality.personality
-        });
+    // Emit thinking started for all agents
+    theoryAgents.forEach(key => {
+      const agent = this.agents[key];
+      this.emit('agent_thinking', {
+        agentName: agent.personality.name,
+        agentKey: key,
+        personality: agent.personality.personality
+      });
+    });
 
+    // PARALLEL EXECUTION with timeout and circuit breaker
+    const parallelResults = await this.agentPool.executeParallel(
+      theoryAgents,
+      async (agent, key) => {
         console.log(`[${agent.personality.name}] Starting to think... (language: ${this.language})`);
-
         const result = await agent.think(context, this.physicsKnowledge, this.world, this.language);
+        console.log(`[${agent.personality.name}] Finished thinking`);
+        return { agentKey: key, agentName: agent.personality.name, result };
+      },
+      { timeout: config.agents.timeout }
+    );
 
-        console.log(`[${agent.personality.name}] Finished thinking:`, result?.thinking?.substring(0, 100));
+    // Process results
+    for (const parallelResult of parallelResults) {
+      if (parallelResult.success) {
+        const { agentKey, agentName, result } = parallelResult.result;
+        const agent = this.agents[agentKey];
 
-        // Emit detailed thought with full content
+        // Emit detailed thought
         this.emit('agent_thought', {
-          agentName: agent.personality.name,
-          agentKey: key,
+          agentName: agentName,
+          agentKey: agentKey,
           personality: agent.personality.personality,
           expertise: agent.personality.expertise,
           thinking: result.thinking || 'No detailed thinking',
           focus: result.focus || 'General exploration',
           actions: result.actions || [],
           message: result.message_to_others,
-          fullResponse: result, // Include full raw response
+          fullResponse: result,
           timestamp: Date.now()
         });
 
         results.push({
-          agentKey: key,
-          agentName: agent.personality.name,
-          result: result
+          agentKey,
+          agentName,
+          result
         });
 
-      } catch (error) {
-        console.error(`[${agent.personality.name}] Error:`, error.message);
+      } else {
+        // Agent failed - log error but continue
+        const agentKey = parallelResult.agentKey;
+        const agent = this.agents[agentKey];
+        const agentName = agent?.personality?.name || agentKey;
+
+        console.error(`[${agentName}] Error:`, parallelResult.error);
 
         this.emit('agent_thought', {
-          agentName: agent.personality.name,
-          agentKey: key,
-          thinking: `Error: ${error.message}`,
+          agentName: agentName,
+          agentKey: agentKey,
+          thinking: `Error: ${parallelResult.error}`,
           focus: 'Error occurred',
-          actions: []
+          actions: [],
+          circuitState: parallelResult.circuitState
         });
 
-        results.push({
-          agentKey: key,
-          agentName: agent.personality.name,
-          error: error.message
+        errors.push({
+          agentKey,
+          agentName,
+          error: parallelResult.error,
+          circuitState: parallelResult.circuitState
         });
       }
     }
 
-    return results;
+    return { results, errors };
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -234,23 +277,17 @@ class Orchestrator {
     const newTheories = [];
 
     for (const result of thinkingResults) {
-      if (result.error) continue;
+      if (!result.result) continue;
 
       const actions = result.result?.actions || [];
       for (const action of actions) {
         if (action.type === 'PROPOSE_THEORY') {
-          const theory = {
-            id: uuidv4(),
+          const theory = this.theoryManager.addTheory({
             ...action.params,
             proposedBy: result.agentName,
-            timestamp: Date.now(),
-            status: 'proposed',
-            challenges: [],
-            support: [],
-            experiments: []
-          };
+            proposedByKey: result.agentKey
+          });
 
-          this.theories.push(theory);
           newTheories.push(theory);
 
           this.emit('theory_proposed', {
@@ -268,13 +305,20 @@ class Orchestrator {
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // PHASE 3: Tenth Man Challenges
+  // PHASE 3: Tenth Man Challenges - PARALLEL with timeout
   // ═══════════════════════════════════════════════════════════════════
   async phaseTenthManChallenges(theories) {
-    const challenges = [];
+    const results = [];
+    const errors = [];
     const tenthMan = this.agents.tenthMan;
 
-    for (const theory of theories) {
+    if (!tenthMan) return { results, errors };
+
+    // Limit theories per cycle
+    const theoriesToChallenge = theories.slice(0, config.theories.maxPerCycle);
+
+    // Challenge all theories in PARALLEL
+    const challengePromises = theoriesToChallenge.map(async (theory) => {
       try {
         this.emit('tenth_man_analyzing', { theory: theory.name });
 
@@ -292,13 +336,19 @@ What are the flaws? What assumptions are questionable?
 What alternative explanations exist? What would DISPROVE this?
 What historical examples suggest caution?`;
 
-        const response = await tenthMan.respond(
-          challengeMessage,
-          theory.proposedBy,
-          this.physicsKnowledge,
-          this.world,
-          this.language
-        );
+        // Use timeout wrapper
+        const response = await Promise.race([
+          tenthMan.respond(
+            challengeMessage,
+            theory.proposedBy,
+            this.physicsKnowledge,
+            this.world,
+            this.language
+          ),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Challenge timeout')), config.theories.challengeTimeout)
+          )
+        ]);
 
         const challenge = {
           id: uuidv4(),
@@ -312,8 +362,8 @@ What historical examples suggest caution?`;
           timestamp: Date.now()
         };
 
-        theory.challenges.push(challenge);
-        challenges.push(challenge);
+        // Add challenge to theory manager
+        this.theoryManager.addChallenge(theory.id, challenge);
 
         this.emit('theory_challenged', {
           theory: theory,
@@ -323,68 +373,99 @@ What historical examples suggest caution?`;
           timestamp: Date.now()
         });
 
+        return { success: true, challenge };
+
       } catch (error) {
-        console.error('Tenth Man challenge error:', error);
+        console.error('Tenth Man challenge error:', error.message);
+        return { success: false, error: error.message, theoryId: theory.id };
+      }
+    });
+
+    // Wait for all challenges with timeout
+    const challengeResults = await Promise.allSettled(challengePromises);
+
+    for (const result of challengeResults) {
+      if (result.status === 'fulfilled') {
+        if (result.value.success) {
+          results.push(result.value.challenge);
+        } else {
+          errors.push(result.value);
+        }
+      } else {
+        errors.push({ error: result.reason?.message || 'Unknown error' });
       }
     }
 
-    return challenges;
+    return { results, errors };
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // PHASE 4: Run Experiments
+  // PHASE 4: Run Experiments - PARALLEL
   // ═══════════════════════════════════════════════════════════════════
   async phaseRunExperiments(thinkingResults) {
-    const experimentResults = [];
+    const experimentRequests = [];
 
+    // Collect all experiment requests
     for (const result of thinkingResults) {
-      if (result.error) continue;
+      if (!result.result) continue;
 
       const actions = result.result?.actions || [];
       for (const action of actions) {
         if (action.type === 'RUN_EXPERIMENT') {
-          try {
-            this.emit('experiment_running', {
-              experiment: action.params.experiment_name,
-              agent: result.agentName
-            });
-
-            const experimentResult = this.world.runExperiment(
-              action.params.experiment_name,
-              action.params.parameters
-            );
-
-            experimentResult.requestedBy = result.agentName;
-            this.experimentResults.push(experimentResult);
-            experimentResults.push(experimentResult);
-
-            this.emit('experiment_completed', {
-              experiment: experimentResult,
-              agent: result.agentName
-            });
-
-          } catch (error) {
-            this.emit('experiment_error', {
-              experiment: action.params.experiment_name,
-              error: error.message
-            });
-          }
+          experimentRequests.push({
+            agentName: result.agentName,
+            experimentName: action.params.experiment_name,
+            parameters: action.params.parameters
+          });
         }
       }
     }
 
-    return experimentResults;
+    // Run all experiments in PARALLEL
+    const experimentPromises = experimentRequests.map(async (request) => {
+      try {
+        this.emit('experiment_running', {
+          experiment: request.experimentName,
+          agent: request.agentName
+        });
+
+        const experimentResult = this.world.runExperiment(
+          request.experimentName,
+          request.parameters
+        );
+
+        experimentResult.requestedBy = request.agentName;
+        this.experimentResults.push(experimentResult);
+
+        this.emit('experiment_completed', {
+          experiment: experimentResult,
+          agent: request.agentName
+        });
+
+        return experimentResult;
+
+      } catch (error) {
+        this.emit('experiment_error', {
+          experiment: request.experimentName,
+          error: error.message
+        });
+        return null;
+      }
+    });
+
+    const results = await Promise.all(experimentPromises);
+    return results.filter(r => r !== null);
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // PHASE 5: Agent Discussions
+  // PHASE 5: Agent Discussions - PARALLEL responses
   // ═══════════════════════════════════════════════════════════════════
   async phaseAgentDiscussions(thinkingResults) {
     const discussions = [];
 
     // Check for discussion requests
     for (const result of thinkingResults) {
-      if (result.error) continue;
+      if (!result.result) continue;
 
       const actions = result.result?.actions || [];
       for (const action of actions) {
@@ -401,71 +482,90 @@ What historical examples suggest caution?`;
 
       // Also broadcast any messages to others
       if (result.result?.message_to_others) {
-        const broadcast = {
-          id: uuidv4(),
-          from: result.agentName,
-          message: result.result.message_to_others,
-          timestamp: Date.now(),
-          responses: []
-        };
+        const broadcast = await this.handleBroadcastMessage(result);
+        if (broadcast) discussions.push(broadcast);
+      }
+    }
 
-        // Get responses from a few relevant agents
-        const responders = this.selectRelevantAgents(result.result.message_to_others, result.agentKey, 3);
+    return discussions;
+  }
 
-        for (const responderKey of responders) {
-          const responder = this.agents[responderKey];
-          try {
-            const response = await responder.respond(
-              result.result.message_to_others,
-              result.agentName,
-              this.physicsKnowledge,
-              this.world,
-              this.language
-            );
+  async handleBroadcastMessage(result) {
+    const broadcast = {
+      id: uuidv4(),
+      from: result.agentName,
+      message: result.result.message_to_others,
+      timestamp: Date.now(),
+      responses: []
+    };
 
-            const responseData = {
-              agent: responder.personality.name,
-              agentKey: responderKey,
-              personality: responder.personality.personality,
-              response: response.response,
-              thinking: response.thinking,
-              agreementLevel: response.agreement_level,
-              actions: response.actions || [],
-              timestamp: Date.now()
-            };
+    // Get responses from relevant agents IN PARALLEL
+    const responders = this.selectRelevantAgents(result.result.message_to_others, result.agentKey, 3);
 
-            broadcast.responses.push(responseData);
+    const responsePromises = responders.map(async (responderKey) => {
+      const responder = this.agents[responderKey];
+      try {
+        const response = await Promise.race([
+          responder.respond(
+            result.result.message_to_others,
+            result.agentName,
+            this.physicsKnowledge,
+            this.world,
+            this.language
+          ),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Response timeout')), config.agents.timeout)
+          )
+        ]);
 
-            // Emit individual response event
-            this.emit('agent_response', {
-              from: result.agentName,
-              to: responder.personality.name,
-              originalMessage: result.result.message_to_others,
-              response: responseData,
-              timestamp: Date.now()
-            });
-          } catch (error) {
-            // Skip failed responses
+        return {
+          success: true,
+          responderKey,
+          response: {
+            agent: responder.personality.name,
+            agentKey: responderKey,
+            personality: responder.personality.personality,
+            response: response.response,
+            thinking: response.thinking,
+            agreementLevel: response.agreement_level,
+            actions: response.actions || [],
+            timestamp: Date.now()
           }
-        }
+        };
+      } catch (error) {
+        return { success: false, responderKey, error: error.message };
+      }
+    });
 
-        discussions.push(broadcast);
+    const responseResults = await Promise.all(responsePromises);
 
-        this.emit('discussion', {
-          id: broadcast.id,
-          initiator: result.agentName,
-          initiatorKey: result.agentKey,
-          topic: result.result.message_to_others,
-          participants: [result.agentName, ...responders.map(k => this.agents[k].personality.name)],
-          participantKeys: [result.agentKey, ...responders],
-          messageCount: broadcast.responses.length + 1,
-          allResponses: broadcast.responses,
+    for (const responseResult of responseResults) {
+      if (responseResult.success) {
+        broadcast.responses.push(responseResult.response);
+
+        this.emit('agent_response', {
+          from: result.agentName,
+          to: responseResult.response.agent,
+          originalMessage: result.result.message_to_others,
+          response: responseResult.response,
           timestamp: Date.now()
         });
       }
     }
 
-    return discussions;
+    this.emit('discussion', {
+      id: broadcast.id,
+      initiator: result.agentName,
+      initiatorKey: result.agentKey,
+      topic: result.result.message_to_others,
+      participants: [result.agentName, ...broadcast.responses.map(r => r.agent)],
+      participantKeys: [result.agentKey, ...broadcast.responses.map(r => r.agentKey)],
+      messageCount: broadcast.responses.length + 1,
+      allResponses: broadcast.responses,
+      timestamp: Date.now()
+    });
+
+    return broadcast;
   }
 
   async facilitateDiscussion(initiatorKey, topic, question, relevantAgentKeys) {
@@ -492,43 +592,57 @@ What historical examples suggest caution?`;
       participants.push('tenthMan');
     }
 
-    // Round of responses
-    for (const participantKey of participants) {
+    // Get responses IN PARALLEL
+    const responsePromises = participants.map(async (participantKey) => {
       const participant = this.agents[participantKey];
       try {
-        const response = await participant.respond(
-          question,
-          this.agents[initiatorKey].personality.name,
-          this.physicsKnowledge,
-          this.world,
-          this.language
-        );
+        const response = await Promise.race([
+          participant.respond(
+            question,
+            this.agents[initiatorKey].personality.name,
+            this.physicsKnowledge,
+            this.world,
+            this.language
+          ),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Discussion timeout')), config.agents.timeout)
+          )
+        ]);
 
-        const messageData = {
-          agent: participant.personality.name,
-          agentKey: participantKey,
-          personality: participant.personality.personality,
-          content: response.response,
-          thinking: response.thinking,
-          agreementLevel: response.agreement_level,
-          actions: response.actions || [],
-          timestamp: Date.now()
+        return {
+          success: true,
+          participantKey,
+          messageData: {
+            agent: participant.personality.name,
+            agentKey: participantKey,
+            personality: participant.personality.personality,
+            content: response.response,
+            thinking: response.thinking,
+            agreementLevel: response.agreement_level,
+            actions: response.actions || [],
+            timestamp: Date.now()
+          }
         };
+      } catch (error) {
+        return { success: false, participantKey, error: error.message };
+      }
+    });
 
-        discussion.messages.push(messageData);
+    const responseResults = await Promise.all(responsePromises);
 
-        // Emit individual discussion message
+    for (const responseResult of responseResults) {
+      if (responseResult.success) {
+        discussion.messages.push(responseResult.messageData);
+
         this.emit('discussion_message', {
           discussionId: discussion.id,
           topic: topic,
-          from: participant.personality.name,
-          fromKey: participantKey,
+          from: responseResult.messageData.agent,
+          fromKey: responseResult.participantKey,
           inResponseTo: this.agents[initiatorKey].personality.name,
-          message: messageData,
+          message: responseResult.messageData,
           timestamp: Date.now()
         });
-      } catch (error) {
-        // Skip failed participants
       }
     }
 
@@ -538,8 +652,8 @@ What historical examples suggest caution?`;
       discussionId: discussion.id,
       topic: topic,
       initiator: this.agents[initiatorKey].personality.name,
-      participants: participants.map(k => this.agents[k].personality.name),
-      participantKeys: participants,
+      participants: discussion.messages.map(m => m.agent),
+      participantKeys: discussion.messages.map(m => m.agentKey).filter(Boolean),
       messageCount: discussion.messages.length,
       allMessages: discussion.messages,
       conclusions: discussion.conclusions,
@@ -550,7 +664,6 @@ What historical examples suggest caution?`;
   }
 
   selectRelevantAgents(topic, excludeKey, count) {
-    // Simple relevance matching based on expertise keywords
     const topicLower = topic.toLowerCase();
     const agentScores = [];
 
@@ -560,54 +673,57 @@ What historical examples suggest caution?`;
       let score = 0;
       const expertise = agent.personality.expertise.join(' ').toLowerCase();
 
-      // Check for keyword matches
       const keywords = topicLower.split(/\s+/);
       for (const keyword of keywords) {
         if (expertise.includes(keyword)) score += 2;
         if (agent.personality.description.toLowerCase().includes(keyword)) score += 1;
       }
 
-      // Add some randomness
       score += Math.random() * 2;
-
       agentScores.push({ key, score });
     }
 
-    // Sort by score and return top N
     agentScores.sort((a, b) => b.score - a.score);
     return agentScores.slice(0, count).map(a => a.key);
   }
 
   // ═══════════════════════════════════════════════════════════════════
   // PHASE 6: Check for Discoveries
+  // 9 de 10 agentes de acuerdo = descubrimiento (el Tenth Man siempre opone)
   // ═══════════════════════════════════════════════════════════════════
   checkForDiscoveries(cycleData) {
     const discoveries = [];
+    const theories = this.theoryManager.getAllTheories();
 
-    // Check theories that have survived challenges
-    for (const theory of this.theories.filter(t => t.status === 'proposed')) {
-      // If a theory has support from multiple agents and has been tested
-      const supportCount = theory.support.length;
-      const hasExperimentalSupport = theory.experiments.some(e => e.supports);
+    // Check theories that have enough support
+    // Con 9 de 10 agentes (excluyendo al Tenth Man que siempre se opone)
+    for (const theory of theories.filter(t => t.status === 'proposed' || t.status === 'challenged')) {
+      const supportCount = theory.votes?.support || 0;
+      const totalVotes = (theory.votes?.support || 0) + (theory.votes?.oppose || 0);
 
-      if (supportCount >= 3 && hasExperimentalSupport) {
+      // Discovery: 9 de 10 agentes de acuerdo (90%+)
+      // El Tenth Man siempre estará en contra, así que 9/10 = 90%
+      const approvalThreshold = 85; // 85% para dar margen
+      const minVotes = 5; // Al menos 5 votos para considerar
+
+      if (totalVotes >= minVotes && theory.approvalRating >= approvalThreshold) {
         theory.status = 'validated';
 
-        const discovery = {
-          id: uuidv4(),
+        const discovery = this.theoryManager.addDiscovery({
           type: 'validated_theory',
           theory: theory,
-          timestamp: Date.now(),
-          supporters: theory.support.map(s => s.agent)
-        };
+          supporters: [],
+          approvalRating: theory.approvalRating,
+          votes: theory.votes
+        });
 
-        this.discoveries.push(discovery);
         discoveries.push(discovery);
 
         this.emit('discovery', {
           type: 'validated_theory',
           name: theory.name,
-          description: theory.description
+          description: theory.description,
+          approvalRating: theory.approvalRating
         });
       }
     }
@@ -617,15 +733,12 @@ What historical examples suggest caution?`;
       if (action.result?.actions) {
         for (const a of action.result.actions) {
           if (a.type === 'RECORD_DISCOVERY') {
-            const discovery = {
-              id: uuidv4(),
+            const discovery = this.theoryManager.addDiscovery({
               type: 'connection',
               ...a.params,
-              discoveredBy: action.agentName,
-              timestamp: Date.now()
-            };
+              discoveredBy: action.agentName
+            });
 
-            this.discoveries.push(discovery);
             discoveries.push(discovery);
 
             this.emit('discovery', {
@@ -658,18 +771,19 @@ What historical examples suggest caution?`;
         key: key,
         ...agent.getState()
       })),
-      theoriesCount: this.theories.length,
-      discoveriesCount: this.discoveries.length,
-      discussionsCount: this.discussions.length
+      theoriesCount: this.theoryManager.getAllTheories().length,
+      discoveriesCount: this.theoryManager.getRecentDiscoveries(1000).length,
+      discussionsCount: this.discussions.length,
+      circuitStatus: this.agentPool.getCircuitStatus()
     };
   }
 
   getTheories() {
-    return this.theories;
+    return this.theoryManager.getAllTheories();
   }
 
   getDiscoveries() {
-    return this.discoveries;
+    return this.theoryManager.getRecentDiscoveries(1000);
   }
 
   getDiscussions() {
@@ -680,6 +794,16 @@ What historical examples suggest caution?`;
     return this.agents[key];
   }
 
+  // Get circuit breaker status for monitoring
+  getCircuitStatus() {
+    return this.agentPool.getCircuitStatus();
+  }
+
+  // Reset circuit breaker for an agent
+  resetAgentCircuit(agentKey) {
+    this.agentPool.resetCircuit(agentKey);
+  }
+
   // Direct query to a specific agent
   async queryAgent(agentKey, question) {
     const agent = this.agents[agentKey];
@@ -687,17 +811,27 @@ What historical examples suggest caution?`;
       throw new Error(`Agent ${agentKey} not found`);
     }
 
-    return await agent.respond(
-      question,
-      'Human Observer',
-      this.physicsKnowledge,
-      this.world,
-      this.language
+    const result = await this.agentPool.executeWithTimeout(
+      agentKey,
+      () => agent.respond(
+        question,
+        'Human Observer',
+        this.physicsKnowledge,
+        this.world,
+        this.language
+      ),
+      config.agents.timeout
     );
+
+    if (!result.success) {
+      throw new Error(result.error);
+    }
+
+    return result.result;
   }
 
   // Start exploration on a specific topic
-  async exploreТopic(topic) {
+  async exploreTopic(topic) {
     const context = {
       topic: topic,
       cycle: this.cycleCount,
@@ -706,24 +840,23 @@ What historical examples suggest caution?`;
       unexplained: UNEXPLAINED_PHENOMENA
     };
 
-    const results = [];
+    const agentKeys = Object.keys(this.agents);
 
-    for (const [key, agent] of Object.entries(this.agents)) {
-      try {
+    const results = await this.agentPool.executeParallel(
+      agentKeys,
+      async (agent, key) => {
         const result = await agent.think(context, this.physicsKnowledge, this.world, this.language);
-        results.push({
-          agent: agent.personality.name,
-          result: result
-        });
-      } catch (error) {
-        results.push({
-          agent: agent.personality.name,
-          error: error.message
-        });
-      }
-    }
+        return { agent: agent.personality.name, result };
+      },
+      { timeout: config.agents.timeout }
+    );
 
-    return results;
+    return results.map(r => {
+      if (r.success) {
+        return r.result;
+      }
+      return { agent: r.agentKey, error: r.error };
+    });
   }
 }
 

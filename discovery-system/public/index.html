@@ -631,23 +631,13 @@
     <div class="modal">
       <h2>🔬 Initialize Discovery System</h2>
       <p style="color: var(--text-secondary); margin-bottom: 15px; font-size: 0.85rem;">
-        Enter your API keys to start the 11-agent physics exploration.
+        Enter your DeepSeek API key to start the 11-agent physics exploration.
       </p>
       <form id="apiForm">
         <div class="form-group">
           <label>DeepSeek API Key</label>
           <input type="password" id="deepseekKey" placeholder="sk-..." required>
-          <small>For 9 theory-proposing agents</small>
-        </div>
-        <div class="form-group">
-          <label>Claude API Key (Anthropic)</label>
-          <input type="password" id="claudeKey" placeholder="sk-ant-..." required>
-          <small>For the Tenth Man (Devil's Advocate)</small>
-        </div>
-        <div class="form-group">
-          <label>OpenAI API Key</label>
-          <input type="password" id="openaiKey" placeholder="sk-..." required>
-          <small>For the Synthesizer (GPT-5.2)</small>
+          <small>Powers all 11 agents (9 theorists + Tenth Man + Synthesizer)</small>
         </div>
         <button type="submit" class="control-btn primary" style="width: 100%; justify-content: center;">
           Initialize System
@@ -850,7 +840,7 @@
         welcome: "Welcome to Physics Discovery",
         welcomeDesc: "Initialize the system with your API keys to begin.",
         howItWorks: "How it works:",
-        step1: "Enter DeepSeek + Claude API keys",
+        step1: "Enter DeepSeek API key",
         step2: "Click Start to begin a session",
         step3: "Click Run Cycle to make agents think",
         step4: "Watch their deliberations appear here!",
@@ -865,13 +855,9 @@
         noTheories: "No theories proposed yet",
         unexplained: "UNEXPLAINED PHENOMENA",
         initSystem: "Initialize Discovery System",
-        initDesc: "Enter your API keys to start the 11-agent physics exploration.",
+        initDesc: "Enter your DeepSeek API key to start the 11-agent physics exploration.",
         deepseekKey: "DeepSeek API Key",
-        claudeKey: "Claude API Key (Anthropic)",
-        openaiKey: "OpenAI API Key",
-        for9agents: "For 9 theory-proposing agents",
-        forTenthMan: "For the Tenth Man (Devil's Advocate)",
-        forSynthesizer: "For the Synthesizer (GPT-5.2)",
+        for11agents: "Powers all 11 agents (9 theorists + Tenth Man + Synthesizer)",
         initialize: "Initialize System",
         initializing: "Initializing...",
         sessionStarted: "Session started",
@@ -916,7 +902,7 @@
         welcome: "Bienvenido al Descubrimiento Físico",
         welcomeDesc: "Inicializa el sistema con tus API keys para comenzar.",
         howItWorks: "Cómo funciona:",
-        step1: "Ingresa las API keys de DeepSeek + Claude",
+        step1: "Ingresa la API key de DeepSeek",
         step2: "Haz clic en Iniciar para comenzar",
         step3: "Haz clic en Ejecutar Ciclo para que los agentes piensen",
         step4: "¡Observa sus deliberaciones aparecer aquí!",
@@ -931,13 +917,9 @@
         noTheories: "Aún no hay teorías propuestas",
         unexplained: "FENÓMENOS SIN EXPLICAR",
         initSystem: "Inicializar Sistema de Descubrimiento",
-        initDesc: "Ingresa tus API keys para iniciar la exploración con 11 agentes.",
+        initDesc: "Ingresa tu API key de DeepSeek para iniciar la exploración con 11 agentes.",
         deepseekKey: "API Key de DeepSeek",
-        claudeKey: "API Key de Claude (Anthropic)",
-        openaiKey: "API Key de OpenAI",
-        for9agents: "Para 9 agentes que proponen teorías",
-        forTenthMan: "Para el Décimo Hombre (Abogado del Diablo)",
-        forSynthesizer: "Para el Sintetizador (GPT-5.2)",
+        for11agents: "Alimenta los 11 agentes (9 teóricos + Décimo Hombre + Sintetizador)",
         initialize: "Inicializar Sistema",
         initializing: "Inicializando...",
         sessionStarted: "Sesión iniciada",
@@ -961,19 +943,19 @@
       }
     };
 
-    // Agent info
+    // Agent info - All DeepSeek agents
     const agentInfo = {
-      euler: { name: 'Euler', color: '#00d4ff', emoji: '📐', role: 'Mathematical purist' },
-      faraday: { name: 'Faraday', color: '#22c55e', emoji: '🔬', role: 'Empirical pragmatist' },
-      democritus: { name: 'Democritus', color: '#f97316', emoji: '⚛', role: 'Particle reductionist' },
-      hubble: { name: 'Hubble', color: '#a855f7', emoji: '🌌', role: 'Cosmic visionary' },
-      shannon: { name: 'Shannon', color: '#06b6d4', emoji: '💾', role: 'Information theorist' },
-      boltzmann: { name: 'Boltzmann', color: '#eab308', emoji: '🎲', role: 'Statistical thinker' },
-      bohr: { name: 'Bohr', color: '#ec4899', emoji: '🔮', role: 'Quantum philosopher' },
-      einstein: { name: 'Einstein', color: '#8b5cf6', emoji: '🌀', role: 'Grand unifier' },
-      anderson: { name: 'Anderson', color: '#14b8a6', emoji: '🧩', role: 'Emergence champion' },
-      tenthMan: { name: 'Advocatus Diaboli', color: '#ef4444', emoji: '👹', role: 'THE TENTH MAN' },
-      synthesizer: { name: 'Nexus', color: '#10b981', emoji: '🔗', role: 'THE SYNTHESIZER' }
+      euler: { name: 'Euler', color: '#00d4ff', emoji: '📐', role: 'Mathematical purist [DeepSeek]' },
+      faraday: { name: 'Faraday', color: '#22c55e', emoji: '🔬', role: 'Empirical pragmatist [DeepSeek]' },
+      democritus: { name: 'Democritus', color: '#f97316', emoji: '⚛', role: 'Particle reductionist [DeepSeek]' },
+      hubble: { name: 'Hubble', color: '#a855f7', emoji: '🌌', role: 'Cosmic visionary [DeepSeek]' },
+      shannon: { name: 'Shannon', color: '#06b6d4', emoji: '💾', role: 'Information theorist [DeepSeek]' },
+      boltzmann: { name: 'Boltzmann', color: '#eab308', emoji: '🎲', role: 'Statistical thinker [DeepSeek]' },
+      bohr: { name: 'Bohr', color: '#ec4899', emoji: '🔮', role: 'Quantum philosopher [DeepSeek]' },
+      einstein: { name: 'Einstein', color: '#8b5cf6', emoji: '🌀', role: 'Grand unifier [DeepSeek]' },
+      anderson: { name: 'Anderson', color: '#14b8a6', emoji: '🧩', role: 'Emergence champion [DeepSeek]' },
+      tenthMan: { name: 'Advocatus Diaboli', color: '#ef4444', emoji: '👹', role: 'THE TENTH MAN [DeepSeek]' },
+      synthesizer: { name: 'Nexus', color: '#10b981', emoji: '🔗', role: 'THE SYNTHESIZER [DeepSeek]' }
     };
 
     // DOM Elements
@@ -1407,9 +1389,7 @@ ${message.data.description || message.data.name || 'New insight found'}`,
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            deepseekApiKey: document.getElementById('deepseekKey').value,
-            claudeApiKey: document.getElementById('claudeKey').value,
-            openaiApiKey: document.getElementById('openaiKey').value
+            deepseekApiKey: document.getElementById('deepseekKey').value
           })
         });
 
@@ -1672,11 +1652,7 @@ ${message.data.description || message.data.name || 'New insight found'}`,
       document.querySelector('.modal h2').textContent = `🔬 ${t.initSystem}`;
       document.querySelector('.modal p').textContent = t.initDesc;
       document.querySelectorAll('.form-group label')[0].textContent = t.deepseekKey;
-      document.querySelectorAll('.form-group label')[1].textContent = t.claudeKey;
-      document.querySelectorAll('.form-group label')[2].textContent = t.openaiKey;
-      document.querySelectorAll('.form-group small')[0].textContent = t.for9agents;
-      document.querySelectorAll('.form-group small')[1].textContent = t.forTenthMan;
-      document.querySelectorAll('.form-group small')[2].textContent = t.forSynthesizer;
+      document.querySelectorAll('.form-group small')[0].textContent = t.for11agents;
       document.querySelector('.modal button[type="submit"]').textContent = t.initialize;
 
       // Welcome message if visible
@@ -1801,8 +1777,8 @@ ${message.data.description || message.data.name || 'New insight found'}`,
 | Bohr | DeepSeek | ${t.roles.bohr} |
 | Einstein | DeepSeek | ${t.roles.einstein} |
 | Anderson | DeepSeek | ${t.roles.anderson} |
-| **Advocatus Diaboli** | **Claude Opus 4.5** | **${t.roles.tenthMan}** |
-| **Nexus** | **GPT-5.2** | **${t.roles.synthesizer}** |
+| **Advocatus Diaboli** | **DeepSeek** | **${t.roles.tenthMan}** |
+| **Nexus** | **DeepSeek** | **${t.roles.synthesizer}** |
 
 ---
 
@@ -1871,7 +1847,7 @@ ${entry.content}
 ---
 
 *${t.footer}*
-*9 DeepSeek Agents + 1 Claude Opus 4.5 (${t.tenthManLabel}) + 1 GPT-5.2 (${t.synthesizerLabel})*
+*11 DeepSeek Agents - All Powered by DeepSeek*
 `;
 
       return report;

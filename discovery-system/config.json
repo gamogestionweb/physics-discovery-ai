@@ -1,0 +1,31 @@
+{
+  "agents": {
+    "timeout": 30000,
+    "maxTokens": 4000,
+    "temperature": 0.8,
+    "maxRetries": 2,
+    "circuitBreaker": {
+      "failureThreshold": 3,
+      "resetTimeout": 60000
+    }
+  },
+  "cycle": {
+    "maxConcurrentAgents": 10,
+    "phaseTimeout": 120000,
+    "continueOnFailure": true
+  },
+  "theories": {
+    "maxPerCycle": 5,
+    "challengeTimeout": 45000
+  },
+  "discovery": {
+    "approvalThreshold": 85,
+    "minVotes": 5
+  },
+  "api": {
+    "deepseek": {
+      "baseUrl": "https://api.deepseek.com/v1",
+      "model": "deepseek-chat"
+    }
+  }
+}

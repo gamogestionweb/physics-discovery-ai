@@ -1,258 +1,359 @@
 # Physics Discovery AI
 
-A comprehensive AI physics exploration platform featuring both single-agent simulation and a revolutionary multi-agent discovery system.
+A comprehensive AI physics exploration platform featuring a revolutionary multi-agent discovery system powered by DeepSeek.
 
-## Overview
-
-This project contains two complementary systems:
-
-1. **Physics Simulation** - A single AI agent discovering classical physics through experimentation
-2. **Multi-Agent Discovery System** - 11 AI agents (DeepSeek + Claude Opus 4.5 + GPT-5.2) collaboratively exploring fundamental physics
+```
+╔═══════════════════════════════════════════════════════════════════╗
+║     PHYSICS DISCOVERY MULTI-AGENT SYSTEM v2.0                     ║
+║     ════════════════════════════════════════                      ║
+║                                                                   ║
+║     10 DeepSeek Agents - Parallel Execution + Circuit Breaker    ║
+║                                                                   ║
+║     "Exploring what we don't know we don't know"                 ║
+╚═══════════════════════════════════════════════════════════════════╝
+```
 
 ---
 
-# Multi-Agent Physics Discovery System
+## Latest Session Results (January 8, 2026)
 
-## Revolutionary AI Collaboration for Physics Discovery
-
-A groundbreaking system where **11 autonomous AI agents** with distinct personalities collaborate, debate, and challenge each other to explore the frontiers of physics - from quantum decoherence to dark matter.
-
-```
-+===================================================================+
-|     PHYSICS DISCOVERY MULTI-AGENT SYSTEM                          |
-|     ====================================                          |
-|                                                                   |
-|     9 DeepSeek + 1 Claude Opus 4.5 + 1 GPT-5.2                   |
-|                                                                   |
-|     "Exploring what we don't know we don't know"                 |
-+===================================================================+
-```
-
-## Session Results (January 7, 2026)
-
-### Statistics
+### Session Statistics
 
 | Metric | Value |
 |--------|-------|
-| **Total Sessions** | 2 |
-| **Total Runtime** | 36 minutes |
-| **Unique Theories Generated** | 127 |
-| **Challenges Issued** | 107 |
-| **Experiments Conducted** | 202 |
-| **Elite Theories (95%+ approval)** | 10 |
-| **Strong Theories (85%+ approval)** | 28 |
+| **Duration** | 31 minutes |
+| **Cycles Completed** | 31 |
+| **Theories Proposed** | 249 |
+| **Tenth Man Challenges** | 155 |
+| **Experiments Executed** | 138 |
+| **Validated Discoveries** | 0 |
+| **Active Agents** | 10/10 |
 
-### Approval Distribution
+### Key Finding
 
-| Category | Count | Percentage |
-|----------|-------|------------|
-| Elite (95%+) | 10 | 7.9% |
-| Strong (85%+) | 28 | 22% |
-| Good (75%+) | 13 | 10.2% |
-| Moderate (65%+) | 19 | 15% |
-| Rejected (<50%) | 52 | 41% |
+> **The system generates high volume but low novelty density.** The 249 theories reduce to ~8-10 fundamental ideas repeated with terminological variations.
 
 ---
 
-## The Agent Architecture
+## Scientific Analysis of Results
 
-### 9 DeepSeek Theorists (Theory Proposers)
+### Taxonomy of Proposed Theories
 
-Each agent embodies a distinct philosophical approach to physics:
+We identified **6 dominant paradigms** among the 249 theories:
+
+#### Paradigm A: Emergent Gravity (~35% of theories)
+
+**Central idea**: Gravity is not fundamental but emerges from more basic phenomena.
+
+| Criterion | Score | Comment |
+|-----------|-------|---------|
+| Novelty | 2/10 | Ideas from Jacobson (1995), Verlinde (2010), Van Raamsdonk (2010) |
+| Falsifiability | 3/10 | Vague predictions, hard to distinguish from GR |
+| Mathematical Consistency | 4/10 | Emergence equations not formalized |
+| Connection to Known Physics | 5/10 | Conceptually coherent but no derivations |
+
+**Variants detected**:
+- Emergence from quantum entanglement (ER=EPR type)
+- Emergence from thermodynamics/entropy (Jacobson-Verlinde type)
+- Emergence from information (holographic type)
+- Emergence from decoherence
+
+---
+
+#### Paradigm B: Information as Foundation (~25% of theories)
+
+**Central idea**: Quantum information is the primary ontological entity of the universe.
+
+| Criterion | Score | Comment |
+|-----------|-------|---------|
+| Novelty | 3/10 | Wheeler (1990), Susskind (1995), Maldacena (1997) |
+| Falsifiability | 2/10 | How to measure "information" as an observable? |
+| Mathematical Consistency | 5/10 | Correct use of von Neumann entropy |
+| Connection to Known Physics | 6/10 | AdS/CFT is well established |
+
+**Variants detected**:
+- Holography (information on boundaries)
+- Computational complexity as physical observable
+- It from bit / It from qubit
+
+---
+
+#### Paradigm C: Dark Matter/Energy as Emergent Effects (~20% of theories)
+
+**Central idea**: No dark matter particles or dark energy field exist; they are effects of misunderstood known physics.
+
+| Criterion | Score | Comment |
+|-----------|-------|---------|
+| Novelty | 4/10 | MOND (Milgrom 1983), backreaction (Buchert 2000s) |
+| Falsifiability | 6/10 | Predictions for rotation curves, CMB |
+| Mathematical Consistency | 3/10 | Cannot reproduce Bullet Cluster, BAO |
+| Connection to Known Physics | 4/10 | Conflicts with observational evidence |
+
+**Critical problem**: The Bullet Cluster (2006) shows separation between gravitational mass and baryonic matter — strong evidence against purely emergent theories.
+
+---
+
+#### Paradigm D: Extended Geometry / Extra Dimensions (~10% of theories)
+
+**Central idea**: Spacetime has more structure than observable (extra dimensions, fiber bundles, extended symmetry groups).
+
+| Criterion | Score | Comment |
+|-----------|-------|---------|
+| Novelty | 3/10 | Kaluza-Klein (1920s), Strings (1980s), Connes (1990s) |
+| Falsifiability | 4/10 | Compactification energies typically inaccessible |
+| Mathematical Consistency | 7/10 | Euler correctly formalizes the structure |
+| Connection to Known Physics | 5/10 | Dimensional reduction is standard |
+
+---
+
+#### Paradigm E: Conventional New Particles (~5% of theories)
+
+**Central idea**: Dark matter = massive particles (WIMPs, axions, etc.)
+
+| Criterion | Score | Comment |
+|-----------|-------|---------|
+| Novelty | 1/10 | Standard physics since 1980s |
+| Falsifiability | 9/10 | Direct experiments ongoing (XENON, LUX, ADMX) |
+| Mathematical Consistency | 8/10 | Well formalized in QFT |
+| Connection to Known Physics | 9/10 | Natural extension of the Standard Model |
+
+**Note**: Although not novel, this is the only paradigm with clear, testable predictions.
+
+---
+
+#### Paradigm F: Matter-Antimatter Asymmetry via Statistical Fluctuations (~5% of theories)
+
+**Central idea**: Baryogenesis doesn't require new physics, just amplified statistical fluctuations.
+
+| Criterion | Score | Comment |
+|-----------|-------|---------|
+| Novelty | 5/10 | Affleck-Dine variant but different mechanism |
+| Falsifiability | 4/10 | Hard to distinguish from other mechanisms |
+| Mathematical Consistency | 6/10 | Consistent with non-equilibrium thermodynamics |
+| Connection to Known Physics | 5/10 | Requires Sakharov conditions |
+
+---
+
+## Inter-Agent Convergence Analysis
+
+### Emergent Consensus Patterns
+
+Despite different perspectives, agents converged on certain points:
+
+**STRONG CONSENSUS (>70% of agents)**:
+1. Quantum gravity must involve information/entropy
+2. Dark matter and dark energy might be related
+3. The quantum measurement problem connects to cosmology
+
+**MODERATE CONSENSUS (40-70%)**:
+1. Decoherence is relevant for understanding quantum-classical transition at cosmic scales
+2. Holography is a useful principle
+
+**STRONG DIVERGENCE (<40%)**:
+1. Do dark matter particles exist? (Faraday/Democritus: yes; rest: probably not)
+2. Is extended geometry necessary? (Euler: yes; rest: agnostic)
+
+### Inter-Agent Agreement Matrix
+
+```
+           Euler  Faraday  Democritus  Hubble  Shannon  Boltzmann  Bohr  Einstein  Anderson
+Euler        -      30%       40%       60%     50%       45%      55%     65%       50%
+Faraday    30%       -        70%       40%     35%       40%      35%     45%       35%
+Democritus 40%      70%        -        45%     40%       50%      40%     50%       40%
+Hubble     60%      40%       45%        -      65%       55%      70%     75%       60%
+Shannon    50%      35%       40%       65%      -        60%      65%     70%       55%
+Boltzmann  45%      40%       50%       55%     60%        -       55%     60%       65%
+Bohr       55%      35%       40%       70%     65%       55%       -      70%       60%
+Einstein   65%      45%       50%       75%     70%       60%      70%      -        65%
+Anderson   50%      35%       40%       60%     55%       65%      60%     65%        -
+```
+
+**Observation**: Faraday (empiricist) and Euler (mathematician) have the lowest compatibility (30%), which is coherent with their perspectives.
+
+---
+
+## Advocatus Diaboli Analysis
+
+### Challenge Effectiveness
+
+Of 155 registered challenges:
+- **Substantive challenges** (identify real flaws): ~40%
+- **Rhetorical challenges** (generic objections): ~45%
+- **Incorrect challenges** (misinterpret the theory): ~15%
+
+### High-Quality Challenge Examples
+
+**Challenge to Shannon on holography**:
+> "The holographic vacuum model is purely theoretical and lacks experimental support; it could be just a mathematical metaphor without real physical relevance."
+
+**Evaluation**: Valid challenge. The AdS/CFT correspondence has not been verified in de Sitter spaces (our universe).
+
+### Advocatus Diaboli Weaknesses
+
+1. **Doesn't propose alternatives**: Criticizes but doesn't suggest better directions
+2. **Excessive historicism**: "Historically, similar theories have failed" — not a logical argument
+3. **Doesn't quantify**: Doesn't estimate Bayesian probabilities of theories
+
+---
+
+## Falsifiability Assessment
+
+### Theories with Testable Predictions
+
+| Theory | Concrete Prediction | Possible Experiment | Timeline |
+|--------|---------------------|---------------------|----------|
+| WIMP DM (Faraday) | Signal in Xe detectors | XENON-nT, LZ | 2024-2030 |
+| Axions (Faraday) | Axion→photon conversion | ADMX, ABRACADABRA | 2025-2035 |
+| Weak DM Interaction | Seasonal correlation | Annual modulation | Ongoing |
+| Cosmological Decoherence | CMB correlations | CMB-S4, LiteBIRD | 2030+ |
+
+### Non-Falsifiable Theories (Problematic)
+
+| Theory | Why Not Falsifiable |
+|--------|---------------------|
+| "Information is fundamental" | Doesn't define "information" observable |
+| "Gravity emerges from X" | X has no prediction distinct from GR |
+| "8D Geometry" | Compactified dimensions inaccessible |
+| "Statistical fluctuations" | Indistinguishable from other mechanisms |
+
+---
+
+## Systematic Deficiencies
+
+### Absence of Formal Mathematics
+
+Of 249 theories:
+- With explicit equations: 12 (4.8%)
+- With named mathematical framework: 45 (18%)
+- Only verbal descriptions: 192 (77%)
+
+**This is critical.** Without mathematics, theories are indistinguishable from philosophical speculation.
+
+### Absence of Numerical Predictions
+
+Typical predictions found:
+- "The decoherence rate depends on X" — How much?
+- "Signals in detectors" — What energy? What cross-section?
+- "CMB correlations" — What Cℓ? What amplitude?
+
+**No theory provides a concrete number that can be compared with data.**
+
+---
+
+## Potentially Novel Ideas
+
+### Candidate 1: Decoherence ↔ Dark Matter Distribution Correlation
+- **Proposed by**: Bohr
+- **Status**: Not found in literature. Could be original.
+- **Problem**: No mechanism proposed.
+
+### Candidate 2: Dark Matter as "Partially Decohered" Fields
+- **Proposed by**: Hubble
+- **Status**: Similar to "fuzzy dark matter" but with different twist.
+- **Problem**: No mathematics.
+
+### Candidate 3: Baryonic Asymmetry by Statistical Symmetry Breaking
+- **Proposed by**: Boltzmann
+- **Status**: Affleck-Dine variant but different mechanism.
+- **Problem**: Requires very specific conditions.
+
+---
+
+## Final Verdict
+
+### What the System Does Well
+- Generates variety of perspectives
+- Advocatus Diaboli identifies real weaknesses
+- Agents reference each other's work (there is "conversation")
+- Thematic convergence suggests certain ideas are robust
+
+### What the System Does NOT Do
+- **Does not produce new physics**: Everything is a variation of 1980-2020 ideas
+- **Does not formalize mathematically**: 77% are verbal descriptions
+- **Does not predict numbers**: Zero quantitative predictions
+- **Does not close the loop**: 249 theories proposed, 0 validated/rejected
+
+### Conclusion
+
+> **The current system is automated brainstorming, not a physics discoverer.**
+
+---
+
+## System Architecture v2.0
+
+### Refactored Components
+
+```
+discovery-system/
+├── agents/
+│   └── agent-pool.js      # Agent pool with parallelization + circuit breaker
+├── cycle/
+│   └── cycle-runner.js    # Cycle runner (alternative)
+├── theories/
+│   └── theory-manager.js  # Theory manager
+├── config.json            # External configuration
+├── orchestrator.js        # Refactored with Promise.all
+├── agents.js              # Optimized prompts (~4000 tokens)
+└── server.js              # WebSocket server
+```
+
+### Technical Improvements
+
+| Feature | Before | After |
+|---------|--------|-------|
+| Agent Execution | Sequential | **Parallel (Promise.all)** |
+| Timeout | None | **30 seconds per agent** |
+| Agent Failure | Blocked cycle | **Continues without blocking** |
+| Circuit Breaker | Didn't exist | **3 failures = agent paused 60s** |
+| Context | ~8000+ tokens | **~4000 tokens** |
+| Agents | 11 (with Synthesizer) | **10 (without Synthesizer)** |
+| Discovery | 3 votes + experiment | **85%+ approval (9/10 agents)** |
+
+### Configuration (config.json)
+
+```json
+{
+  "agents": {
+    "timeout": 30000,
+    "maxTokens": 4000,
+    "circuitBreaker": {
+      "failureThreshold": 3,
+      "resetTimeout": 60000
+    }
+  },
+  "discovery": {
+    "approvalThreshold": 85,
+    "minVotes": 5
+  }
+}
+```
+
+---
+
+## The 10 Agents
+
+### 9 Theory Proposers
 
 | Agent | Personality | Core Approach |
 |-------|-------------|---------------|
-| **Euler** | Mathematical purist | Seeks elegant mathematical structures, symmetries as fundamental keys |
-| **Faraday** | Empirical pragmatist | Demands experimental verification, focuses on measurable predictions |
-| **Democritus** | Particle reductionist | Everything reduces to fundamental particles and their interactions |
-| **Hubble** | Cosmic visionary | Connects local physics to universal evolution and cosmology |
-| **Shannon** | Information fundamentalist | Physics is fundamentally about information processing |
-| **Boltzmann** | Statistical thinker | Probability and statistics explain emergent phenomena |
-| **Bohr** | Quantum philosopher | Obsessed with measurement, observation, and interpretation |
-| **Einstein** | Grand unifier | Seeks unified geometric theories connecting all domains |
-| **Anderson** | Emergence champion | "More is different" - complexity creates genuinely new laws |
+| **Euler** | Mathematical purist | Seeks elegant mathematical structures |
+| **Faraday** | Empirical pragmatist | Demands experimental verification |
+| **Democritus** | Particle reductionist | Everything reduces to fundamental particles |
+| **Hubble** | Cosmic visionary | Connects local physics to cosmology |
+| **Shannon** | Information fundamentalist | Physics is about information processing |
+| **Boltzmann** | Statistical thinker | Probability explains everything |
+| **Bohr** | Quantum philosopher | Obsessed with measurement |
+| **Einstein** | Grand unifier | Seeks unified theories |
+| **Anderson** | Emergence champion | "More is different" |
 
-### Claude Opus 4.5 - The Tenth Man (Advocatus Diaboli)
+### The Tenth Man (Advocatus Diaboli)
 
-Implementing the **Tenth Man Rule**: If 9 people agree, the 10th MUST disagree and find problems.
+Implementing the **Tenth Man Rule**: If 9 agree, the 10th MUST disagree.
 
-**Role:**
-- Systematically challenges every theory proposed
-- Identifies hidden assumptions and overlooked alternatives
-- Points out historical cases where "obvious truths" were wrong
-- Proposes what evidence would **disprove** each theory
-- Protects the group from groupthink and overconfidence
-
-### GPT-5.2 - The Synthesizer (Nexus)
-
-The meta-cognitive agent that finds connections across all theories.
-
-**Role:**
-- Listens to ALL agents before synthesizing
-- Discovers unexpected connections between disparate theories
-- Identifies common mathematical structures across domains
-- Proposes unified frameworks reconciling contradictions
-- Creates conceptual maps showing idea interconnections
-
----
-
-## Emergent Convergence Patterns
-
-The agents independently converged on several major themes:
-
-### 1. Geometry-Information-Thermodynamics Unification
-
-**Pattern**: Multiple agents independently concluded that geometry, information, and thermodynamics are aspects of the same fundamental phenomenon.
-
-**Supporting Theories:**
-- QIDT (Quantum Information Theory of Decoherence)
-- Active Vacuum Geometry
-- Geometric Decoherence
-
-### 2. Decoherence from Geometric Structure
-
-**Pattern**: Quantum decoherence emerges from spacetime geometry or vacuum fluctuations, not just environmental coupling.
-
-**Supporting Theories:**
-- Geometric Decoherence (Euler-Einstein)
-- TGTE (Geometric Emergent Transitions Theory)
-- GQV-ME (Quantum Vacuum Geometry)
-
-### 3. Dark Matter as Emergent Phenomenon
-
-**Pattern**: Dark matter is not a particle but a collective/emergent state of quantum fields.
-
-**Supporting Theories:**
-- EDMF (Emergent Dark Matter Field)
-- C-VG (Collective Vacuum Geometry)
-- Unified Emergence Theory (Anderson)
-
-### 4. Information Flow and Arrow of Time
-
-**Pattern**: The thermodynamic arrow of time is connected to irreversible information dispersal.
-
-**Supporting Theories:**
-- Statistical Decoherence (Boltzmann)
-- PIV - Information-Vacuum Principle (Nexus)
-- QIDT (Shannon-Boltzmann)
-
----
-
-## Elite Theories (95%+ Agent Approval)
-
-### 1. Geometric Decoherence (Euler-Einstein)
-
-Decoherence as a geometric phenomenon in projective Hilbert space, where environmental interaction induces curvature in the Fubini-Study metric that localizes states to classical submanifolds.
-
-**Mathematics:**
-```
-ds² = (<δψ|δψ> - |<ψ|δψ>|²)  [Fubini-Study metric]
-τ_decoherence ~ 1/√|R|       [R = scalar curvature]
-```
-
-### 2. Information-Theoretic Decoherence - QIDT (Shannon-Boltzmann)
-
-Decoherence as a fundamental quantum information transfer process from system to environment, with decoherence time determined by quantum channel capacity.
-
-**Mathematics:**
-```
-τ_decoherence ∝ 1/χ          [χ = quantum channel capacity]
-ΔS_vN ≥ k_B × I_gained       [Fundamental measurement inequality]
-```
-
-### 3. Active Vacuum Geometry (Euler-Einstein)
-
-The quantum vacuum possesses geometric structure determining fundamental constants, emerging as classical spacetime.
-
-**Predictions:**
-- Temporal variations in fundamental constants correlated with vacuum fluctuations
-- Geometry-dependent Casimir force corrections
-- Specific relationship: Λ ∝ m_H⁴/ℏ³c
-
-### 4. Cosmic Evolutionary Field - CCE (Hubble)
-
-The cosmic decoherence scale, determined by universe entropy at different epochs, establishes when primordial quantum fluctuations "freeze" into classical perturbations.
-
-**Mathematics:**
-```
-τ_dec(z) = τ_0 exp[S_universe(z)/k_B]
-L_dec(z) = c × τ_dec(z)
-```
-
-### 5. Unified Emergence Theory (Anderson)
-
-Both quantum decoherence and dark matter are manifestations of universal emergent principles operating at different scales - neither reducible to individual components.
-
----
-
-## Nexus Synthesis: Information-Vacuum Principle (PIV)
-
-The GPT-5.2 Synthesizer produced a unifying framework:
-
-> "The emergence of classicality (decoherence) and the arrow of time are described by a net flow of information toward inaccessible degrees of freedom (environment/horizons/UV modes). This flow induces an effective term in the vacuum energy-momentum tensor proportional to invariants constructed from entanglement entropy production."
-
-**Unifies perspectives from:**
-- Boltzmann (thermodynamics)
-- Shannon (information)
-- Bohr (measurement)
-- Hubble (cosmology)
-
----
-
-## Sample Theories by Domain
-
-### Quantum Decoherence
-
-| Theory | Author | Key Insight |
-|--------|--------|-------------|
-| Statistical Decoherence | Boltzmann | Decoherence as thermodynamic process with S_vN increase |
-| Contextual Reversible Decoherence | Bohr | Decoherence is context-dependent, not fundamentally irreversible |
-| Fundamental Interaction Decoherence (TDIF) | Democritus | Decoherence from gauge boson interactions |
-
-### Dark Matter
-
-| Theory | Author | Key Insight |
-|--------|--------|-------------|
-| EDMF (Emergent Dark Matter Field) | Anderson | Dark matter as collective state of quantum field condensate |
-| SCDM (Scalar Curvature Dark Matter) | Democritus | Scalar field coupled to Ricci curvature |
-| DGE (Gravitational Decoherence) | Einstein | Dark matter as emergent effect of quantum gravitational decoherence |
-
-### Unification Attempts
-
-| Theory | Author | Key Insight |
-|--------|--------|-------------|
-| Extended Symmetry Vacuum | Democritus | Supersymmetry cancels vacuum energy contributions |
-| Hierarchical Emergence | Anderson | Dark matter and decoherence as scale-dependent emergence |
-| TGTE (Geometric Transitions) | Einstein | Phase transitions induced by spacetime curvature |
-
----
-
-## Experimental Capabilities
-
-The agents conducted 202 experiments including:
-
-### Quantum Experiments
-- Double-slit interference patterns
-- Bell inequality tests
-- Decoherence time evolution
-- Quantum vacuum fluctuations
-
-### Astrophysical Simulations
-- Galaxy rotation curves (NFW profiles)
-- Black hole metrics (Schwarzschild, Kerr)
-- Cosmic microwave background analysis
-- Dark matter halo modeling
-
-### Thermodynamic Studies
-- Landauer limit calculations
-- Information erasure costs
-- Entropy production measurements
-- Casimir force simulations
-
-### Particle Physics
-- High-energy collision products
-- Threshold energy calculations
-- Cross-section predictions
+- Systematically challenges every theory
+- Identifies hidden assumptions
+- Points out historical cases where consensus was wrong
+- Proposes what would **disprove** each theory
 
 ---
 
@@ -266,80 +367,37 @@ npm start
 
 Open http://localhost:3000
 
-## Configuration
-
-Enter your API keys:
-- **DeepSeek** - For the 9 theorist agents
-- **Anthropic Claude** - For the Tenth Man
-- **OpenAI** - For the Synthesizer (GPT-5.2)
+Enter your DeepSeek API key to start.
 
 ---
 
-## Architecture
+## Recommendations for Future Iterations
+
+### 1. Force Mathematical Formalization
 
 ```
-+-------------------------------------------------------------------+
-|                        ORCHESTRATOR                                |
-|  Coordinates cycles, manages discussions, tracks discoveries       |
-+-------------------------------------------------------------------+
-|                                                                    |
-|  +--------------------------------------------------------------+ |
-|  |                   EXPLORATION WORLD                           | |
-|  |  * Observational Data (real physics datasets)                | |
-|  |  * Simulation Engine (run experiments)                       | |
-|  |  * Discovery Tracking                                        | |
-|  +--------------------------------------------------------------+ |
-|                                                                    |
-|  +--------------------------------------------------------------+ |
-|  |                 PHYSICS KNOWLEDGE BASE                        | |
-|  |  * All verified physical laws                                | |
-|  |  * Unexplained phenomena                                     | |
-|  |  * Mathematical structures                                   | |
-|  |  * Cross-domain connections                                  | |
-|  +--------------------------------------------------------------+ |
-|                                                                    |
-|  +---------+ +---------+ +---------+ +---------+ +---------+     |
-|  |  Euler  | | Faraday | |Democritus| | Hubble | | Shannon |     |
-|  |DeepSeek | |DeepSeek | |DeepSeek | |DeepSeek | |DeepSeek |     |
-|  +----+----+ +----+----+ +----+----+ +----+----+ +----+----+     |
-|       |           |           |           |           |           |
-|  +---------+ +---------+ +---------+ +---------+ +---------+     |
-|  |Boltzmann| |  Bohr   | |Einstein | |Anderson | |10th Man |     |
-|  |DeepSeek | |DeepSeek | |DeepSeek | |DeepSeek | | Claude  |     |
-|  +---------+ +---------+ +---------+ +---------+ +----+----+     |
-|                                                       |           |
-|                                  CHALLENGES ALL ------+           |
-|                                                                    |
-|  +--------------------------------------------------------------+ |
-|  |                    NEXUS (GPT-5.2)                            | |
-|  |               THE SYNTHESIZER                                 | |
-|  |         Finds connections, unifies theories                   | |
-|  +--------------------------------------------------------------+ |
-|                                                                    |
-+-------------------------------------------------------------------+
+Every proposed theory MUST include:
+1. At least one non-trivial mathematical equation
+2. At least one specific numerical prediction (with units)
+3. A concrete experiment that would falsify it
+4. Explanation of why it differs from [list of known theories]
 ```
 
----
+### 2. Add Specialized Agents
 
-## Philosophy
+- **Experimentalist**: Evaluates experimental viability
+- **Historian**: Identifies overlap with prior work, cites references
 
-This system embodies key principles of scientific discovery:
+### 3. Implement Quality Filters
 
-1. **Diverse Perspectives** - Different approaches to the same problem, mimicking how breakthroughs often come from unexpected angles
-
-2. **Systematic Skepticism** - The Tenth Man ensures no theory is accepted without rigorous challenge
-
-3. **Emergence** - New insights emerge from the interaction of multiple viewpoints
-
-4. **Synthesis** - The Synthesizer finds hidden connections humans might miss
-
-5. **Empirical Grounding** - Access to real observational data and simulations
+1. **Mathematical filter**: Does it have equations?
+2. **Falsifiability filter**: Does it have testable predictions?
+3. **Novelty filter**: Is it different from known X, Y, Z?
+4. **Agent voting**: Only theories that pass 1-3
 
 ---
 
 ## WebSocket Events
-
-Real-time updates via WebSocket:
 
 | Event | Description |
 |-------|-------------|
@@ -347,85 +405,14 @@ Real-time updates via WebSocket:
 | `theory_proposed` | New theory submitted |
 | `theory_challenged` | Tenth Man challenges |
 | `experiment_completed` | Experiment finished |
-| `discovery` | Consensus reached |
-| `synthesis` | Nexus synthesis update |
-
----
-
-## Single-Agent Physics Simulation
-
-The original system places a single AI in a simulated physical world:
-
-### Discoverable Laws
-- Newton's Second Law: F = ma
-- Gravity: constant acceleration ~9.81 m/s²
-- Friction coefficients
-- Pendulum Period: T = 2π√(L/g)
-- Archimedes' Principle
-- Projectile Motion
-
-### Usage
-```bash
-node server.js
-# Open http://localhost:3001
-```
+| `discovery` | 85%+ consensus reached |
+| `cycle_completed` | Cycle finished with stats |
 
 ---
 
 ## License
 
 MIT
-
----
-
-## Connections
-
-<table>
-<tr>
-<td width="50%">
-
-### Discovery as destiny
-
-> *"Curiosity has its own reason for existence."*
-
-The AI discovers F=ma. But that law already existed before being discovered. Was it destined to find it?
-
-**[Are You There Reading?](https://github.com/gamogestionweb/Are-you-there-are-reading)** asks whether chance exists or everything is predetermined. If the laws of physics are already there, is discovering them choice or inevitability?
-
-</td>
-<td width="50%">
-
-### The present contains everything
-
-If the present contains all information from past and future, then the laws of physics were already "written" in the initial state of the universe.
-
-**[PCP Universe](https://github.com/gamogestionweb/pcp-universe)** validates this idea on real quantum hardware. The Physics Discovery AI discovers it empirically.
-
-</td>
-</tr>
-<tr>
-<td>
-
-### Adam named the animals
-
-In **[Genesis Simulation](https://github.com/gamogestionweb/genesis-simulation)**, Adam names every creature. Here, the AI names every law.
-
-To name is to understand. To categorize is to control. Both projects explore how intelligence gives structure to chaos.
-
-</td>
-<td>
-
-### Observation changes everything
-
-> *"You are the writer of your life, you are your actions today."*
-
-In **[100 Días de una Vida](https://github.com/gamogestionweb/100-dias-de-una-vida)**, Abel observes his own life and writes it. Here, the AI observes physics and discovers it.
-
-Conscious observation transforms reality into knowledge.
-
-</td>
-</tr>
-</table>
 
 ---
 

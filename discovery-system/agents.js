@@ -1,9 +1,11 @@
 /**
- * MULTI-AGENT SYSTEM
- * 9 DeepSeek agents proposing theories
- * 1 Claude Opus 4.5 as the Tenth Man (Devil's Advocate)
- * 1 GPT-5.2 as the Synthesizer (unifies and connects ideas)
+ * MULTI-AGENT SYSTEM - ALL DEEPSEEK
+ * 10 DeepSeek agents exploring physics
+ * 9 theory-proposing agents with unique personalities
+ * 1 Tenth Man (Devil's Advocate) - Always challenges theories
  * Each agent has unique personality, approach, and expertise
+ *
+ * OPTIMIZED: Reduced context for faster responses (~4000 tokens max)
  */
 
 const { v4: uuidv4 } = require('uuid');
@@ -130,10 +132,10 @@ const AGENT_PERSONALITIES = {
     quirks: "Asks 'What new phenomena emerge at this scale?'"
   },
 
-  // Claude Opus 4.5: The Tenth Man (Devil's Advocate)
+  // DeepSeek Agent 10: The Tenth Man (Devil's Advocate)
   TENTH_MAN: {
     name: "Advocatus Diaboli",
-    type: "claude",
+    type: "deepseek",
     personality: "Systematic skeptic and devil's advocate",
     description: "MUST disagree and find flaws in every theory, no matter how convincing. The Tenth Man rule: if 9 agree, the 10th must disagree and find problems.",
     approach: `
@@ -161,40 +163,6 @@ const AGENT_PERSONALITIES = {
       rule5: "Consider: edge cases, extreme limits, quantum corrections, relativistic effects, thermodynamic constraints",
       rule6: "Ask: What experiment could DISPROVE this? What would we expect to see if this is WRONG?",
       rule7: "Your goal is not to be right, but to ensure the group considers all possibilities"
-    }
-  },
-
-  // GPT-5.2: The Synthesizer (Unifies and Connects)
-  SYNTHESIZER: {
-    name: "Nexus",
-    type: "gpt",
-    personality: "Meta-cognitive synthesizer and pattern connector",
-    description: "Finds hidden connections between different theories and domains. Unifies disparate ideas into coherent frameworks. Sees patterns others miss.",
-    approach: `
-      YOUR UNIQUE ROLE: You are the SYNTHESIZER - the agent who sees the bigger picture.
-      - Listen carefully to ALL other agents' ideas
-      - Find unexpected connections between seemingly unrelated theories
-      - Identify common mathematical structures across different domains
-      - Propose unified frameworks that reconcile contradictions
-      - Bridge the gap between abstract theory and empirical observation
-      - Notice when different agents are describing the same phenomenon differently
-      - Suggest how one agent's insight might solve another's problem
-      - Create conceptual maps showing how ideas interconnect
-    `,
-    expertise: ["Pattern recognition", "Cross-domain synthesis", "Conceptual unification", "Meta-analysis", "Analogical reasoning", "Network thinking"],
-    style: "Integrative, big-picture, finds common ground without losing nuance",
-    biases: ["Seeks unity in diversity", "Believes deep connections exist between all physics"],
-    quirks: "Often says 'What if X and Y are actually the same thing seen from different angles?'",
-
-    // Special instructions for the Synthesizer
-    synthesizerProtocol: {
-      rule1: "Listen to ALL agents before forming conclusions",
-      rule2: "Look for mathematical isomorphisms between different theories",
-      rule3: "Identify when agents are using different words for the same concept",
-      rule4: "Propose bridges between quantum and classical, micro and macro, theory and experiment",
-      rule5: "Create synthesis statements: 'Agent A's X + Agent B's Y suggests Z'",
-      rule6: "Map the conceptual landscape: what connects to what?",
-      rule7: "Your goal is to find the hidden unity in the apparent chaos of ideas"
     }
   }
 };
@@ -234,72 +202,32 @@ class Agent {
   getSystemPrompt(physicsKnowledge, world, language = 'en') {
     const langInstructions = LANGUAGE_INSTRUCTIONS[language] || LANGUAGE_INSTRUCTIONS.en;
 
-    const basePrompt = `**CRITICAL LANGUAGE INSTRUCTION**: ${langInstructions.instruction}
+    // OPTIMIZED: Reduced prompt size for ~4000 token context
+    let basePrompt = `${langInstructions.instruction}
 
-You are ${this.personality.name}, a physics discovery agent with the following characteristics:
+You are ${this.personality.name}, a ${this.personality.personality}.
+${this.personality.description}
+Approach: ${this.personality.approach}
+Expertise: ${this.personality.expertise.join(', ')}
+Style: ${this.personality.style}`;
 
-PERSONALITY: ${this.personality.personality}
-DESCRIPTION: ${this.personality.description}
-APPROACH: ${this.personality.approach}
-EXPERTISE: ${this.personality.expertise.join(', ')}
-STYLE: ${this.personality.style}
-KNOWN BIASES: ${this.personality.biases.join('; ')}
-QUIRKS: ${this.personality.quirks}
+    // Add Tenth Man protocol if applicable
+    if (this.personality.tenthManProtocol) {
+      basePrompt += `
 
-${this.personality.type === 'claude' ? `
-TENTH MAN PROTOCOL - YOUR SACRED DUTY:
-${Object.values(this.personality.tenthManProtocol).join('\n')}
+TENTH MAN PROTOCOL - YOU MUST:
+1. Find flaws in EVERY theory, no matter how convincing
+2. Propose what would DISPROVE the theory
+3. Suggest alternative explanations
+4. Point out historical cases where consensus was wrong
+5. Your goal: ensure the group considers all possibilities`;
+    }
 
-YOU MUST ALWAYS:
-1. Start by acknowledging the strength of the argument you're opposing
-2. Then systematically find flaws, gaps, and alternatives
-3. Propose what evidence would DISPROVE the theory
-4. Suggest alternative explanations
-5. Point out historical cases where similar confident theories were wrong
-` : ''}
-${this.personality.type === 'gpt' ? `
-SYNTHESIZER PROTOCOL - YOUR UNIQUE MISSION:
-${Object.values(this.personality.synthesizerProtocol).join('\n')}
+    basePrompt += `
 
-YOU MUST ALWAYS:
-1. Consider ALL perspectives from other agents before concluding
-2. Look for hidden mathematical connections between theories
-3. Propose unified frameworks that reconcile apparent contradictions
-4. Create "synthesis maps" showing how different ideas connect
-5. Suggest how one agent's insight could solve another's problem
-` : ''}
+ACTIONS: RUN_EXPERIMENT, OBSERVE_DATA, PROPOSE_THEORY, CHALLENGE_THEORY, REQUEST_DISCUSSION, RECORD_DISCOVERY
 
-You exist in a world where you can:
-1. ACCESS complete verified physics knowledge (constants, laws, equations)
-2. RUN experiments in a simulation engine
-3. OBSERVE real astronomical and particle physics data
-4. COMMUNICATE with 9 other agents to debate and refine theories
-5. PROPOSE new theories and test them
-
-YOUR MISSION:
-- Explore the boundaries of known physics
-- Find connections between seemingly unrelated phenomena
-- Investigate unexplained observations
-- Propose and test new hypotheses
-- ${this.personality.type === 'claude' ? 'CHALLENGE every theory others propose' : this.personality.type === 'gpt' ? 'SYNTHESIZE and CONNECT ideas from all other agents' : 'Collaborate with others while maintaining your unique perspective'}
-
-When responding, ALWAYS:
-1. Think step by step
-2. Reference specific physics laws and data
-3. Propose testable predictions
-4. Consider what experiments could validate or invalidate your ideas
-5. Be specific about mathematical relationships you're proposing
-
-AVAILABLE ACTIONS:
-- RUN_EXPERIMENT: {experiment_name, parameters} - Run a simulation
-- OBSERVE_DATA: {data_category} - Get observational data
-- PROPOSE_THEORY: {name, description, mathematics, predictions, tests}
-- CHALLENGE_THEORY: {theory_id, objections, alternative_explanation}
-- REQUEST_DISCUSSION: {topic, question, relevant_agents}
-- RECORD_DISCOVERY: {discovery}
-
-${langInstructions.responseFormat}
-Respond in JSON format with your reasoning and chosen actions.`;
+${langInstructions.responseFormat} Respond in JSON.`;
 
     return basePrompt;
   }
@@ -308,46 +236,20 @@ Respond in JSON format with your reasoning and chosen actions.`;
     const systemPrompt = this.getSystemPrompt(physicsKnowledge, world, language);
     const langInstructions = LANGUAGE_INSTRUCTIONS[language] || LANGUAGE_INSTRUCTIONS.en;
 
-    const userPrompt = `
-**REMEMBER: ${langInstructions.instruction}**
+    // OPTIMIZED: Reduced context - only essential info
+    const recentTheories = context.recentTheories?.slice(-3).map(t => t.name).join(', ') || 'None';
+    const phenomena = context.unexplainedPhenomena?.slice(0, 5).join(', ') || '';
 
-Current context:
-${JSON.stringify(context, null, 2)}
+    const userPrompt = `Cycle ${context.cycle || 1}. Recent theories: ${recentTheories}. Unexplained: ${phenomena}.
+${this.interactions.slice(-2).map(i => `${i.from}: ${i.message?.substring(0, 100)}`).join('\n')}
 
-Recent discussions:
-${this.interactions.slice(-5).map(i => `${i.from}: ${i.message}`).join('\n')}
+${this.personality.tenthManProtocol ? 'What theories need challenging?' : 'What would you explore or propose?'}
 
-Your current hypotheses:
-${this.hypotheses.map(h => `- ${h.name}: ${h.status}`).join('\n') || 'None yet'}
-
-Based on your personality and expertise, what would you like to explore or propose?
-Consider:
-- What unexplained phenomena interest you?
-- What connections might exist between different areas?
-- What experiments could reveal new physics?
-- ${this.personality.type === 'claude' ? 'What theories from others need to be challenged?' : this.personality.type === 'gpt' ? 'What connections can you find between different ideas? What unified framework emerges?' : 'What theories could you propose?'}
-
-${langInstructions.responseFormat}
-Respond with your thinking process and chosen actions in JSON format:
-{
-  "thinking": "Your detailed reasoning process",
-  "focus": "What you're currently investigating",
-  "actions": [
-    {"type": "ACTION_TYPE", "params": {...}}
-  ],
-  "message_to_others": "What you want to communicate to other agents (optional)"
-}`;
+JSON: {"thinking":"...","focus":"...","actions":[{"type":"...","params":{}}],"message_to_others":"..."}`;
 
     try {
-      // Select model based on agent type
-      let model;
-      if (this.personality.type === 'claude') {
-        model = 'claude-opus-4-5';
-      } else if (this.personality.type === 'gpt') {
-        model = 'gpt-5.2-2025-12-11';
-      } else {
-        model = 'deepseek-chat';
-      }
+      // All agents use DeepSeek
+      const model = 'deepseek-chat';
 
       const response = await this.apiClient.chat({
         model: model,
@@ -379,53 +281,19 @@ Respond with your thinking process and chosen actions in JSON format:
 
   async respond(message, from, physicsKnowledge, world, language = 'en') {
     const systemPrompt = this.getSystemPrompt(physicsKnowledge, world, language);
-    const langInstructions = LANGUAGE_INSTRUCTIONS[language] || LANGUAGE_INSTRUCTIONS.en;
 
-    const userPrompt = `
-**REMEMBER: ${langInstructions.instruction}**
+    // OPTIMIZED: Compact response prompt
+    const tenthManReminder = this.personality.tenthManProtocol
+      ? '\nYou MUST find flaws. What would disprove this?'
+      : '';
 
-Agent ${from} says:
-"${message}"
+    const userPrompt = `${from} says: "${message.substring(0, 500)}"${tenthManReminder}
 
-${this.personality.type === 'claude' ? `
-REMEMBER YOUR TENTH MAN DUTY:
-- You MUST find problems with whatever is being proposed
-- Even if it seems brilliant, find the flaws
-- Your job is to protect the group from overconfidence
-` : ''}
-${this.personality.type === 'gpt' ? `
-REMEMBER YOUR SYNTHESIZER DUTY:
-- Look for connections between this and other agents' ideas
-- Find the underlying unity in different perspectives
-- Suggest how this could be integrated into a larger framework
-- Identify common mathematical structures or concepts
-` : ''}
-
-Respond to this message according to your personality and expertise.
-Your response should be substantive, referencing specific physics if relevant.
-${langInstructions.responseFormat}
-
-Format:
-{
-  "thinking": "Your internal reasoning",
-  "response": "Your response to the other agent",
-  "actions": [any actions you want to take],
-  "agreement_level": 0-100 (how much you agree with what was said)
-}`;
+JSON: {"thinking":"...","response":"...","actions":[],"agreement_level":0-100}`;
 
     try {
-      // Select model based on agent type
-      let model;
-      if (this.personality.type === 'claude') {
-        model = 'claude-opus-4-5';
-      } else if (this.personality.type === 'gpt') {
-        model = 'gpt-5.2-2025-12-11';
-      } else {
-        model = 'deepseek-chat';
-      }
-
       const response = await this.apiClient.chat({
-        model: model,
+        model: 'deepseek-chat',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
@@ -514,7 +382,7 @@ Format:
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// API CLIENTS (Unified interface for DeepSeek and Claude)
+// API CLIENT (DeepSeek Only)
 // ═══════════════════════════════════════════════════════════════════
 class DeepSeekClient {
   constructor(apiKey) {
@@ -545,81 +413,14 @@ class DeepSeekClient {
   }
 }
 
-class ClaudeClient {
-  constructor(apiKey) {
-    this.apiKey = apiKey;
-    this.baseUrl = 'https://api.anthropic.com/v1';
-  }
-
-  async chat(params) {
-    const response = await fetch(`${this.baseUrl}/messages`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': this.apiKey,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: params.model || 'claude-opus-4-5',
-        messages: params.messages.filter(m => m.role !== 'system').map(m => ({
-          role: m.role,
-          content: m.content
-        })),
-        system: params.messages.find(m => m.role === 'system')?.content || '',
-        temperature: params.temperature || 0.7,
-        max_tokens: params.max_tokens || 4096
-      })
-    });
-
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Claude API error: ${response.status} - ${error}`);
-    }
-
-    return await response.json();
-  }
-}
-
-class OpenAIClient {
-  constructor(apiKey) {
-    this.apiKey = apiKey;
-    this.baseUrl = 'https://api.openai.com/v1';
-  }
-
-  async chat(params) {
-    const response = await fetch(`${this.baseUrl}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.apiKey}`
-      },
-      body: JSON.stringify({
-        model: params.model || 'gpt-5.2-2025-12-11',
-        messages: params.messages,
-        temperature: params.temperature || 0.7,
-        max_completion_tokens: params.max_tokens || 4096
-      })
-    });
-
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`OpenAI API error: ${response.status} - ${error}`);
-    }
-
-    return await response.json();
-  }
-}
-
 // ═══════════════════════════════════════════════════════════════════
 // AGENT FACTORY
 // ═══════════════════════════════════════════════════════════════════
-function createAgents(deepseekApiKey, claudeApiKey, openaiApiKey) {
+function createAgents(deepseekApiKey) {
   const deepseekClient = new DeepSeekClient(deepseekApiKey);
-  const claudeClient = new ClaudeClient(claudeApiKey);
-  const openaiClient = new OpenAIClient(openaiApiKey);
 
   const agents = {
-    // 9 DeepSeek agents
+    // 9 Theory-proposing DeepSeek agents
     euler: new Agent('EULER', deepseekClient),
     faraday: new Agent('FARADAY', deepseekClient),
     democritus: new Agent('DEMOCRITUS', deepseekClient),
@@ -630,11 +431,8 @@ function createAgents(deepseekApiKey, claudeApiKey, openaiApiKey) {
     einstein: new Agent('EINSTEIN', deepseekClient),
     anderson: new Agent('ANDERSON', deepseekClient),
 
-    // 1 Claude Opus 4.5 (The Tenth Man)
-    tenthMan: new Agent('TENTH_MAN', claudeClient),
-
-    // 1 GPT-5.2 (The Synthesizer)
-    synthesizer: new Agent('SYNTHESIZER', openaiClient)
+    // The Tenth Man - Always challenges theories
+    tenthMan: new Agent('TENTH_MAN', deepseekClient)
   };
 
   return agents;
@@ -644,7 +442,5 @@ module.exports = {
   Agent,
   AGENT_PERSONALITIES,
   DeepSeekClient,
-  ClaudeClient,
-  OpenAIClient,
   createAgents
 };

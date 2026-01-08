@@ -24,18 +24,18 @@ app.use(express.static(path.join(__dirname, 'public')));
 // API ENDPOINTS
 // ═══════════════════════════════════════════════════════════════════
 
-// Initialize the system with API keys
+// Initialize the system with API key
 app.post('/api/initialize', (req, res) => {
-  const { deepseekApiKey, claudeApiKey, openaiApiKey } = req.body;
+  const { deepseekApiKey } = req.body;
 
-  if (!deepseekApiKey || !claudeApiKey || !openaiApiKey) {
+  if (!deepseekApiKey) {
     return res.status(400).json({
-      error: 'DeepSeek, Claude, and OpenAI API keys are all required'
+      error: 'DeepSeek API key is required'
     });
   }
 
   try {
-    orchestrator = new Orchestrator(deepseekApiKey, claudeApiKey, openaiApiKey);
+    orchestrator = new Orchestrator(deepseekApiKey);
 
     // Set up event forwarding to WebSocket clients
     setupEventForwarding();
@@ -353,27 +353,22 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`
 ╔═══════════════════════════════════════════════════════════════════╗
-║     PHYSICS DISCOVERY MULTI-AGENT SYSTEM                          ║
+║     PHYSICS DISCOVERY MULTI-AGENT SYSTEM v2.0                     ║
 ║     ════════════════════════════════════════                      ║
 ║                                                                   ║
-║     9 DeepSeek + 1 Claude Opus 4.5 + 1 GPT-5.2                   ║
+║     10 DeepSeek Agents - Parallel Execution + Circuit Breaker    ║
 ║                                                                   ║
 ║     Server running at: http://localhost:${PORT}                     ║
 ║                                                                   ║
-║     DeepSeek Agents:                                              ║
-║     ├── Euler (Mathematical purist)                               ║
-║     ├── Faraday (Empirical pragmatist)                           ║
-║     ├── Democritus (Particle reductionist)                       ║
-║     ├── Hubble (Cosmic visionary)                                ║
-║     ├── Shannon (Information fundamentalist)                     ║
-║     ├── Boltzmann (Statistical thinker)                          ║
-║     ├── Bohr (Quantum philosopher)                               ║
-║     ├── Einstein (Grand unifier)                                 ║
-║     └── Anderson (Emergence champion)                            ║
+║     Theory Agents (9):                                            ║
+║     ├── Euler, Faraday, Democritus, Hubble, Shannon              ║
+║     ├── Boltzmann, Bohr, Einstein, Anderson                      ║
 ║                                                                   ║
-║     Special Agents:                                               ║
-║     ├── Advocatus Diaboli [Claude] (THE TENTH MAN)               ║
-║     └── Nexus [GPT] (THE SYNTHESIZER)                            ║
+║     Challenger (1):                                               ║
+║     └── Advocatus Diaboli (TENTH MAN - Always opposes)           ║
+║                                                                   ║
+║     Discovery: 9/10 agents agree (85%+) = VALIDATED              ║
+║     Timeout: 30s per agent | Circuit breaker: 3 failures         ║
 ║                                                                   ║
 ╚═══════════════════════════════════════════════════════════════════╝
   `);
