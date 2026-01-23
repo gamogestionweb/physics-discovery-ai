@@ -14,8 +14,8 @@ const app = express();
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
-// HARDCODED API KEY
-const DEEPSEEK_API_KEY = 'sk-de404a062f674c87bdfd65bf225bfcd4';
+// API KEY - Set via environment variable or user input
+let DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || null;
 
 // State
 let agents = null;
@@ -214,9 +214,19 @@ async function runExploration(topic) {
 // API ENDPOINTS
 // ═══════════════════════════════════════════════════════════════════
 
-// Initialize system
+// Initialize system with API key
 app.post('/api/initialize', (req, res) => {
   try {
+    const { apiKey } = req.body;
+
+    if (apiKey) {
+      DEEPSEEK_API_KEY = apiKey;
+    }
+
+    if (!DEEPSEEK_API_KEY) {
+      return res.status(400).json({ error: 'API key required. Send { "apiKey": "sk-..." }' });
+    }
+
     agents = createAgents(DEEPSEEK_API_KEY);
 
     res.json({
