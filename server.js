@@ -8,6 +8,12 @@ const express = require('express');
 const { WebSocketServer } = require('ws');
 const http = require('http');
 const path = require('path');
+
+// Log startup
+console.log('Starting server...');
+console.log('Current directory:', __dirname);
+console.log('Public path:', path.join(__dirname, 'public'));
+
 const { createAgents, getAgentList } = require('./agents');
 
 const app = express();
@@ -24,13 +30,23 @@ let isRunning = false;
 let theories = [];
 let discoveries = [];
 
+// Serve static files
+const publicPath = path.join(__dirname, 'public');
+console.log('Serving static files from:', publicPath);
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(publicPath));
 
 // Root route - serve index.html explicitly
 app.get('/', (req, res) => {
   console.log('GET / request received');
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  const indexPath = path.join(publicPath, 'index.html');
+  console.log('Sending file:', indexPath);
+  res.sendFile(indexPath, (err) => {
+    if (err) {
+      console.error('Error sending file:', err);
+      res.status(500).send('Error loading page');
+    }
+  });
 });
 
 // Broadcast to all connected clients
