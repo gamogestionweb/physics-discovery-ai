@@ -27,6 +27,12 @@ let discoveries = [];
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Root route - serve index.html explicitly
+app.get('/', (req, res) => {
+  console.log('GET / request received');
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 // Broadcast to all connected clients
 function broadcast(message) {
   const messageStr = JSON.stringify(message);
