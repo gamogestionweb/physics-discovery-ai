@@ -322,6 +322,15 @@ wss.on('connection', (ws) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════
+// ERROR HANDLING - Keep process alive
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
 // START SERVER
 // ═══════════════════════════════════════════════════════════════════
 
