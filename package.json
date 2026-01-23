@@ -1,22 +1,17 @@
 {
-  "name": "physics-discovery-ai",
+  "name": "physics-discovery-multiagent",
   "version": "1.0.0",
-  "description": "An AI agent that discovers the laws of physics through experimentation",
+  "description": "Multi-agent physics discovery system with 9 DeepSeek theorists and 1 Claude Opus 4.5 Devil's Advocate",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "node server.js"
   },
-  "keywords": [
-    "ai",
-    "physics",
-    "simulation",
-    "deepseek",
-    "scientific-discovery",
-    "llm"
-  ],
-  "author": "",
-  "license": "MIT",
   "dependencies": {
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+    "ws": "^8.14.2",
+    "openai": "^4.20.0",
+    "@anthropic-ai/sdk": "^0.24.0",
+    "uuid": "^9.0.0"
   }
 }

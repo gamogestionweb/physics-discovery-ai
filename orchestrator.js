@@ -4,14 +4,21 @@
  * Coordinates discussions, experiments, and theory validation
  */
 
-const { createAgents } = require('./agents');
+const { createAgents, getAgentList } = require('./agents');
 const { ExplorationWorld } = require('./exploration-world');
 const { PHYSICS_KNOWLEDGE, UNEXPLAINED_PHENOMENA, MATHEMATICAL_STRUCTURES, CROSS_DOMAIN_CONNECTIONS } = require('./physics-knowledge-base');
 const { v4: uuidv4 } = require('uuid');
 
+// Discovery threshold: 95% agreement (19/20 physicists)
+const DISCOVERY_THRESHOLD = 0.95;
+const TOTAL_AGENTS = 20;
+const MIN_AGREEMENT_FOR_DISCOVERY = Math.ceil(TOTAL_AGENTS * DISCOVERY_THRESHOLD);
+
 class Orchestrator {
-  constructor(deepseekApiKey, claudeApiKey, openaiApiKey) {
-    this.agents = createAgents(deepseekApiKey, claudeApiKey, openaiApiKey);
+  constructor(deepseekApiKey) {
+    // Only DeepSeek API - all 20 agents use it
+    this.agents = createAgents(deepseekApiKey);
+    this.agentList = getAgentList();
     this.world = new ExplorationWorld();
     this.physicsKnowledge = {
       laws: PHYSICS_KNOWLEDGE,
@@ -169,7 +176,8 @@ class Orchestrator {
     };
 
     // Process agents one at a time so we can see each one's deliberation in real-time
-    const agentEntries = Object.entries(this.agents).filter(([key]) => key !== 'tenthMan');
+    // Exclude Devil's Advocate from initial thinking - they challenge later
+    const agentEntries = Object.entries(this.agents).filter(([key]) => key !== 'devilsAdvocate');
 
     for (const [key, agent] of agentEntries) {
       try {
@@ -268,11 +276,11 @@ class Orchestrator {
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // PHASE 3: Tenth Man Challenges
+  // PHASE 3: Devil's Advocate Challenges
   // ═══════════════════════════════════════════════════════════════════
   async phaseTenthManChallenges(theories) {
     const challenges = [];
-    const tenthMan = this.agents.tenthMan;
+    const devilsAdvocate = this.agents.devilsAdvocate;
 
     for (const theory of theories) {
       try {
@@ -292,7 +300,7 @@ What are the flaws? What assumptions are questionable?
 What alternative explanations exist? What would DISPROVE this?
 What historical examples suggest caution?`;
 
-        const response = await tenthMan.respond(
+        const response = await devilsAdvocate.respond(
           challengeMessage,
           theory.proposedBy,
           this.physicsKnowledge,
@@ -487,9 +495,9 @@ What historical examples suggest caution?`;
       relevantAgentKeys.filter(k => this.agents[k]) :
       this.selectRelevantAgents(topic, initiatorKey, 4);
 
-    // Always include Tenth Man in discussions
-    if (!participants.includes('tenthMan')) {
-      participants.push('tenthMan');
+    // Always include Devil's Advocate in discussions
+    if (!participants.includes('devilsAdvocate')) {
+      participants.push('devilsAdvocate');
     }
 
     // Round of responses
@@ -579,36 +587,63 @@ What historical examples suggest caution?`;
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // PHASE 6: Check for Discoveries
+  // PHASE 6: Check for Discoveries (95% Consensus Rule)
   // ═══════════════════════════════════════════════════════════════════
   checkForDiscoveries(cycleData) {
     const discoveries = [];
 
     // Check theories that have survived challenges
     for (const theory of this.theories.filter(t => t.status === 'proposed')) {
-      // If a theory has support from multiple agents and has been tested
-      const supportCount = theory.support.length;
-      const hasExperimentalSupport = theory.experiments.some(e => e.supports);
+      // Calculate approval percentage from all agents who have voted
+      const supportCount = theory.support?.length || 0;
+      const challengeCount = theory.challenges?.length || 0;
+      const totalVotes = supportCount + challengeCount;
 
-      if (supportCount >= 3 && hasExperimentalSupport) {
-        theory.status = 'validated';
+      // Need at least some votes to evaluate
+      if (totalVotes < 5) continue;
+
+      // Calculate approval: need 95% (19/20) agreement for discovery
+      // Devil's Advocate's disagreement is expected and doesn't block discovery
+      const approvalRate = supportCount / TOTAL_AGENTS;
+      const hasExperimentalSupport = theory.experiments?.some(e => e.supports) || false;
+
+      // DISCOVERY THRESHOLD: 95% agreement (even if Devil's Advocate disagrees)
+      if (approvalRate >= DISCOVERY_THRESHOLD || supportCount >= MIN_AGREEMENT_FOR_DISCOVERY) {
+        theory.status = 'DISCOVERY';
+        theory.approvalRate = approvalRate;
+        theory.discoveryTimestamp = Date.now();
 
         const discovery = {
           id: uuidv4(),
-          type: 'validated_theory',
+          type: 'consensus_discovery',
           theory: theory,
+          approvalRate: approvalRate,
+          supportCount: supportCount,
+          totalAgents: TOTAL_AGENTS,
+          threshold: DISCOVERY_THRESHOLD,
+          hasExperimentalSupport: hasExperimentalSupport,
+          devilsAdvocateObjection: theory.challenges?.find(c => c.challenger === 'Advocatus Diaboli'),
           timestamp: Date.now(),
-          supporters: theory.support.map(s => s.agent)
+          supporters: theory.support?.map(s => s.agent) || []
         };
 
         this.discoveries.push(discovery);
         discoveries.push(discovery);
 
         this.emit('discovery', {
-          type: 'validated_theory',
+          type: 'consensus_discovery',
           name: theory.name,
-          description: theory.description
+          description: theory.description,
+          approvalRate: Math.round(approvalRate * 100),
+          supportCount: supportCount,
+          totalAgents: TOTAL_AGENTS,
+          isHistoric: true
         });
+
+        console.log(`\n${'═'.repeat(60)}`);
+        console.log(`🎉 DISCOVERY! ${theory.name}`);
+        console.log(`   Approval: ${Math.round(approvalRate * 100)}% (${supportCount}/${TOTAL_AGENTS} physicists)`);
+        console.log(`${'═'.repeat(60)}\n`);
       }
     }
 
