@@ -290,6 +290,11 @@ app.get('/api/discoveries', (req, res) => {
   res.json(discoveries);
 });
 
+// Health check endpoint for Railway
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', timestamp: Date.now() });
+});
+
 // ═══════════════════════════════════════════════════════════════════
 // WEBSOCKET
 // ═══════════════════════════════════════════════════════════════════
